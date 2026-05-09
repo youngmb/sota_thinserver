@@ -1,0 +1,27 @@
+# Compiled class file and jars
+*.class
+./bin/
+./jars
+
+# Log file
+*.log
+
+# VS Code workspaces
+.vscode/
+*.code-workspace
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+replay_pid*
+
+#vscode config
+.vscode/
+
+#intelliJ config
+.idea/
+
+# omitted Sota helper classes for creating pose object files
+src/tools/*

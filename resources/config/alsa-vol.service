@@ -1,0 +1,11 @@
+[Unit]
+Description=Set ALSA Volume
+After=puseaudio.service
+After=sotaappmng.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/amixer -c 2 cset numid=7 85%
+
+[Install]
+WantedBy=multi-user.target
