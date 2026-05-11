@@ -64,11 +64,9 @@ public class AudioStreamPlayer implements Runnable {
     }
 
     /// ================== speaker draining thread functions
-    public void init() {
-        openLine();
-    }
 
     public void start() {
+        openLine();
         workerThread = new Thread(this, "audio stream player thread");
         workerThread.start();
     }

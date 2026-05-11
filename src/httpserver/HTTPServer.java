@@ -1,32 +1,32 @@
 package httpserver;
 
+import audioStreaming.MicService;
+import audioStreaming.SpeakerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import httpserver.status.ActionResult;
-import httpserver.status.MicStatus;
-import httpserver.status.SpeakerStatus;
+import httpserver.status.AudioStatus;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import main.Properties;
 import main.PropertyKey;
 import main.SotaSystemController;
 
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public class HTTPServer {
-    private final int httpPort = Properties.getPropAsInt(PropertyKey.KEY_NET_HTTP_PORT);
     Javalin app = null;
-    SotaSystemController controller = null;
+//    SotaSystemController controller = null;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public HTTPServer(SotaSystemController controller) {
+        int httpPort = Properties.getPropAsInt(PropertyKey.KEY_NET_HTTP_PORT);
         app = Javalin.create(config -> {
             config.defaultContentType = "application/json";
         }).start(httpPort);
 
-        this.controller = controller;
+//        this.controller = controller;
 
         ObjectMapper mapper = new ObjectMapper();  // manual JSON parsing for better error handling
         mapper.findAndRegisterModules();
@@ -37,11 +37,10 @@ public class HTTPServer {
         ctx.json(java.util.Collections.singletonMap( "Error", error ));
     }
 
-    private <T> void createStatusEndpoint(
+    private void createStatusEndpoint(
             String path,
-            Class<T> statusClass,
-            Supplier<T> getter,
-            BiFunction<T, String, ActionResult> setter) {
+            Supplier<AudioStatus> getter,
+            BiFunction<AudioStatus, String, ActionResult> setter) {
 
         app.get(path, ctx -> {
             ctx.json(getter.get());
@@ -49,7 +48,7 @@ public class HTTPServer {
 
         app.post(path, ctx -> {
             try {
-                T req = mapper.readValue(ctx.body(), statusClass);
+                AudioStatus req = mapper.readValue(ctx.body(), (Class<AudioStatus>) AudioStatus.class);
                 ActionResult ar = setter.apply(req, ctx.ip());
 
                 if (ar.success)
@@ -66,22 +65,19 @@ public class HTTPServer {
         });
     }
 
-
-    public void enableMicEndpoints() {
+    public void enableMicEndpoints(MicService micService) {
         createStatusEndpoint(
                 "/mic",
-                MicStatus.class,
-                () -> controller.http_getMicStatus(),
-                (req, ip) -> controller.http_setMicStatus(req, ip)
+                micService::getStatus,
+                micService::setStatus
         );
     }
 
-    public void enableSpeakerEndpoints() {
+    public void enableSpeakerEndpoints(SpeakerService speakerService) {
         createStatusEndpoint(
                 "/speaker",
-                SpeakerStatus.class,
-                () -> controller.http_getSpeakerStatus(),
-                (req, ip) -> controller.http_setSpeakerStatus(req)
+                speakerService::getStatus,
+                (req, ip) -> speakerService.setStatus(req)
         );
     }
 }

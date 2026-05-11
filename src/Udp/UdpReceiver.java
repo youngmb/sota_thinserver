@@ -1,4 +1,4 @@
-package UdpServers;
+package Udp;
 
 import main.Properties;
 import main.PropertyKey;
@@ -11,7 +11,8 @@ import java.util.concurrent.BlockingQueue;
 
 public class UdpReceiver implements Runnable {
 
-    private final DatagramSocket socket;
+    private DatagramSocket socket;
+    private int port = -1;
     private final BlockingQueue<byte[]> queue;
     private Thread workerThread = null;
 
@@ -30,11 +31,16 @@ public class UdpReceiver implements Runnable {
     private int dataWaiting = 0; // number of packets saved
 
     public UdpReceiver(int port, BlockingQueue<byte[]> queue) throws SocketException {
-        this.socket = new DatagramSocket(port);;
         this.queue = queue;
+        this.port = port;
     }
 
     public void start() {
+        try {
+            this.socket = new DatagramSocket(this.port);
+        } catch (SocketException e) {
+            throw new RuntimeException(e);
+        }
         workerThread = new Thread(this, "udp audio stream receiver thread");
         workerThread.start();
     }

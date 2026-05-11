@@ -1,9 +1,12 @@
 package audioStreaming;
 
-import UdpServers.UdpReceiver;
+import Udp.UdpReceiver;
+import httpserver.status.ActionResult;
+import httpserver.status.AudioStatus;
+import main.Properties;
+import main.PropertyKey;
 
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -16,7 +19,7 @@ public class SpeakerService {
     private String lastError = null;
 
     public SpeakerService() {
-        speaker.init();
+
     }
 
     public String getLastError() {
@@ -58,8 +61,41 @@ public class SpeakerService {
         }
         udpReceiver.stop();
         speaker.stop();
+        enabled = false;
         System.out.println(this.getClass().getName()+" successfully disabled");
         return true;
+    }
+
+    public AudioStatus getStatus() {
+        AudioStatus status = new AudioStatus();
+        status.enabled = this.isEnabled();
+        status.volume = -1;
+        status.sampleRate = Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_RATE);
+        status.bufferSize = Properties.getPropAsInt(PropertyKey.KEY_SPK_BUFFER_SIZE);
+        status.sampleSize = Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE);
+        return status;
+    }
+
+    public ActionResult setStatus(AudioStatus status) {
+        // unset parameters are null.
+        String error = "";
+
+        if (status.enabled != null && status.enabled != this.isEnabled()) {  // 'enabled' changed
+            if (status.enabled) {
+
+                if (status.streamPort == null) // we need a port
+                    error += "Error enabling speaker, did not receive a port to listen on: " +
+                            "port '" + status.streamPort + "'. ";
+                else if (!this.enable(status.streamPort))
+                    error += this.getLastError();
+
+            } else // request to disable
+                if (!this.disable())
+                    error += this.getLastError();
+        }
+        if (error.equals("")) // no errror
+            return ActionResult.ok();
+        else return ActionResult.fail(error);
     }
 
 }

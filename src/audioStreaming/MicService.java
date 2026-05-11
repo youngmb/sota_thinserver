@@ -1,6 +1,10 @@
 package audioStreaming;
 
-import UdpServers.UdpSender;
+import Udp.UdpSender;
+import httpserver.status.ActionResult;
+import httpserver.status.AudioStatus;
+import main.Properties;
+import main.PropertyKey;
 
 import java.net.UnknownHostException;
 
@@ -63,4 +67,39 @@ public class MicService {
         System.out.println(this.getClass().getName()+" successfully disabled");
         return true;
     }
+
+    public AudioStatus getStatus() {
+        AudioStatus status = new AudioStatus();
+        status.enabled = this.isEnabled();
+        status.volume = -1;
+        status.sampleRate = Properties.getPropAsInt(PropertyKey.KEY_MIC_SAMPLE_RATE);
+        status.bufferSize = Properties.getPropAsInt(PropertyKey.KEY_MIC_BUFFER_SIZE);
+        status.sampleSize = Properties.getPropAsInt(PropertyKey.KEY_MIC_SAMPLE_SIZE);
+        return status;
+    }
+
+    public ActionResult setStatus(AudioStatus status, String ip) {
+        // unset parameters are null.
+        String error = "";
+        if (status.enabled != null && status.enabled != this.isEnabled()) {  // 'enabled' changed
+            if (status.enabled) {  // turn on
+                if (status.streamIP != null)
+                    ip = status.streamIP; // overrule source IP by request IP
+
+                if (status.streamPort == null) // we need a port
+                    error += "Error enabling microphone, did not receive a port: " +
+                            "IP '" + ip + "', port 'null'. ";
+                else if (!this.enable(ip, status.streamPort))
+                    error += this.getLastError();
+            } else { // request to disable
+                if (!this.disable())
+                    error += this.getLastError();
+            }
+        }  // end "enabled" change
+
+        if (error.equals("")) // no errror
+            return ActionResult.ok();
+        else return ActionResult.fail(error);
+    }
+
 }

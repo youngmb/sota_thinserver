@@ -1,4 +1,4 @@
-package UdpServers;
+package Udp;
 
 import main.Properties;
 import main.PropertyKey;
@@ -42,7 +42,10 @@ public class UdpSender {
         DatagramPacket packet = new DatagramPacket(buffer.array(), buffer.position(), target, port);
         try {
             socket.send(packet);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.err.println("Err sending datagram: ");
+            e.printStackTrace();
+        }
 
         sequence = (sequence+1)%SEQUENCE_MOD;
     }
