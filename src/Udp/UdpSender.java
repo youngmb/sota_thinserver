@@ -6,7 +6,7 @@ import main.PropertyKey;
 import java.net.*;
 import java.nio.ByteBuffer;
 
-public class UdpSender {
+public class UdpSender extends UdpStream {
 
     private DatagramSocket socket;
     private final InetAddress target;
@@ -16,10 +16,15 @@ public class UdpSender {
     private final int SEQUENCE_MOD = Properties.getPropAsInt(PropertyKey.KEY_NET_SEQ_MOD);
 
     private final ByteBuffer buffer = ByteBuffer.allocate(
-            Properties.getPropAsInt(PropertyKey.KEY_NET_SND_BUFFER_SIZE)
+            Properties.getPropAsInt(PropertyKey.KEY_MIC_BUFFER_SIZE)
                     + 4);  // +4 to add the int at the beginning for sequence number
 
-    public UdpSender(String targetIP, int port) throws UnknownHostException {
+    public UdpSender(String targetIP,
+                     int port,
+                     int dataBufferSize // expected size of incoming data
+        ) throws UnknownHostException {
+        super(port, dataBufferSize);
+
         try {
             this.socket = new DatagramSocket();
         } catch (SocketException e) {
@@ -32,11 +37,10 @@ public class UdpSender {
     }
 
     public String getIP() { return target.getHostAddress(); }
-    public int getPort() { return port; }
 
     public void send(byte[] data) {
         buffer.clear();
-        buffer.putInt(sequence);
+        buffer.putInt(sequence);  //WARNING: match size of reserved bytes, fragile coupling here
         buffer.put(data);
 
         DatagramPacket packet = new DatagramPacket(buffer.array(), buffer.position(), target, port);

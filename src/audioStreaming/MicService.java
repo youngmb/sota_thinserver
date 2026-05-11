@@ -38,7 +38,7 @@ public class MicService {
         if (isEnabled()) return true;
 
         try {
-            micUdpSender = new UdpSender(ip, port);
+            micUdpSender = new UdpSender(ip, port, Properties.getPropAsInt(PropertyKey.KEY_MIC_BUFFER_SIZE));
             micStreamer = new AudioStreamSender(micUdpSender::send);
             micStreamer.init();
             micStreamer.start();
@@ -74,7 +74,11 @@ public class MicService {
         status.volume = -1;
         status.sampleRate = Properties.getPropAsInt(PropertyKey.KEY_MIC_SAMPLE_RATE);
         status.bufferSize = Properties.getPropAsInt(PropertyKey.KEY_MIC_BUFFER_SIZE);
-        status.sampleSize = Properties.getPropAsInt(PropertyKey.KEY_MIC_SAMPLE_SIZE);
+        status.sampleSize_bits = Properties.getPropAsInt(PropertyKey.KEY_MIC_SAMPLE_SIZE);
+        status.channels = Properties.getPropAsInt(PropertyKey.KEY_MIC_CHANNELS);
+        status.streamPort = this.getPort();
+        status.streamIP = this.getIP();
+
         return status;
     }
 
@@ -101,5 +105,4 @@ public class MicService {
             return ActionResult.ok();
         else return ActionResult.fail(error);
     }
-
 }

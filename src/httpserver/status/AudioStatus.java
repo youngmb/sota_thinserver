@@ -11,9 +11,10 @@ public class AudioStatus {
     public Integer volume;
     public Integer streamPort;
     public String streamIP;
-    public String error;
+
+    public Integer bufferSize;
 
     public Integer sampleRate;
-    public Integer bufferSize;
-    public Integer sampleSize;
+    public Integer sampleSize_bits;
+    public Integer channels;
 }

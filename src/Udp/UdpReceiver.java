@@ -9,20 +9,14 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
 
-public class UdpReceiver implements Runnable {
+public class UdpReceiver extends UdpStream implements Runnable {
 
-    private DatagramSocket socket;
-    private int port = -1;
     private final BlockingQueue<byte[]> queue;
     private Thread workerThread = null;
 
     private volatile boolean running = true;
-    private final int bufferSize = Properties.getPropAsInt(PropertyKey.KEY_NET_RCV_BUFFER_SIZE);
 
-    // --UDP packet sequencing
-
-    // agreed upon maximum seq number to wrap around.
-    private final int SEQUENCE_MOD = Properties.getPropAsInt(PropertyKey.KEY_NET_SEQ_MOD);
+    // track expected next packet sequence
     private int expectedSeq = -1;  // neg impossible so means no expectation yet
 
     private final int waitBufferSize = Properties.getPropAsInt(PropertyKey.KEY_NET_UDP_WAITBUFFER_SIZE);
@@ -30,7 +24,11 @@ public class UdpReceiver implements Runnable {
     private final byte[][] waitBufferData = new byte[waitBufferSize][];
     private int dataWaiting = 0; // number of packets saved
 
-    public UdpReceiver(int port, BlockingQueue<byte[]> queue) throws SocketException {
+    public UdpReceiver(int port,
+                       BlockingQueue<byte[]> queue,
+                       int dataBufferSize) // expected size of incoming data
+            throws SocketException {
+        super(port, dataBufferSize);
         this.queue = queue;
         this.port = port;
     }
@@ -56,10 +54,6 @@ public class UdpReceiver implements Runnable {
             System.err.println("unable to join thread when closing.");
             e.printStackTrace();
         }
-    }
-
-    public Integer getPort() {
-        return this.socket.getPort();
     }
 
     // modulo arithmetic version to check newer counter ints.
@@ -137,7 +131,8 @@ public class UdpReceiver implements Runnable {
                 if (expectedSeq == -1)
                     expectedSeq = sequence;
 
-                byte[] audioData = new byte[len - 4]; // strip sequence int
+//                System.out.println("got: "+sequence);
+                byte[] audioData = new byte[len - SEQUENCE_RESERVED_BYTES]; // strip sequence int
                 buf.get(audioData);
 
                 waitBufferInsert(sequence, audioData);  // Add to wait buffer. should have room

@@ -4,7 +4,10 @@ import main.Properties;
 import main.PropertyKey;
 
 import javax.sound.sampled.*;
+import java.sql.Time;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 /**
  * Streams raw PCM audio chunks emitted by a DataProvider (e.g. UDPReceiver) to the speakers.
@@ -17,7 +20,7 @@ public class AudioStreamPlayer implements Runnable {
     private static final AudioFormat audioFormat = new AudioFormat(
             Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_RATE),
             Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE),
-        1, true,false
+            Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS), true,false
     );
 
     private final BlockingQueue<byte[]> playbackQueue;
@@ -72,32 +75,86 @@ public class AudioStreamPlayer implements Runnable {
     }
 
     @Override
+//    public void run() {     // Dedicated worker keeps playback off the network IO threads.
+//        running = true;
+//        workerThread = Thread.currentThread();
+//        byte[] data = null;
+//        while (running) {
+////            try {
+////                data = playbackQueue.take();  // block only on empty
+//                data = playbackQueue.poll();
+//                if (data == null)
+//
+////            } catch (InterruptedException e) { // continue gracefully if interrupted
+////                continue;
+////            }
+//
+//            if (data.length == 0) {
+//                System.err.println("AudioPlayback: empty payload ");
+//                return;
+//            }
+//
+//            try {
+//            int written = 0;
+//                while (written < data.length) {  // TODO : probably needs fixing to fix SOTA buffer underflow bug
+//                    int toWrite = Math.min(ioBufferSize, data.length - written);
+//                    sourceLine.write(data, written, toWrite);
+//                    written += toWrite;
+//                }
+//            } catch (Exception e) {  // shouldn't happen
+//                e.printStackTrace();
+//            }
+//        }
+//    }
+
     public void run() {     // Dedicated worker keeps playback off the network IO threads.
+        int frameSize = Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS) * Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE)/8;
+
+        double s_in_buffer =
+                (double) ioBufferSize / frameSize / Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_RATE);
+        long bufferNs = (long)(s_in_buffer * 1_000_000_000L);
+
+        long next = System.nanoTime();
+
         running = true;
         workerThread = Thread.currentThread();
         byte[] data = null;
+
         while (running) {
-            try {
-                data = playbackQueue.take();  // block on empty
-            } catch (InterruptedException e) { // continue gracefully if interrupted
-                continue;
-            }
+            data = playbackQueue.poll();
 
-            if (data.length == 0) {
-                System.err.println("AudioPlayback: empty payload ");
-                return;
-            }
+            if (data != null) // have data
+                writeData(data);
+            else
+                writeData(new byte[ioBufferSize]); // write silence
 
-            try {
-            int written = 0;
-                while (written < data.length) {  // TODO : probably needs fixing to fix SOTA buffer underflow bug
-                    int toWrite = Math.min(ioBufferSize, data.length - written);
-                    sourceLine.write(data, written, toWrite);
-                    written += toWrite;
+            if (playbackQueue.size() > Properties.getPropAsInt(PropertyKey.KEY_NET_UDP_WAITBUFFER_SIZE)) { // we're behind
+                data = playbackQueue.poll();
+                while (data !=  null) {
+                    writeData(data);
+                    data = playbackQueue.poll();
                 }
-            } catch (Exception e) {  // shouldn't happen
-                e.printStackTrace();
+                next = System.nanoTime();
             }
+
+            next += bufferNs;  // wait this much for every frame we receive
+            long sleepNs = next - System.nanoTime();
+            if (sleepNs > 0)
+                LockSupport.parkNanos(sleepNs);
+        }
+    }
+
+    private void writeData(byte[] data) {
+        try {
+            int written = 0;
+            // avoid overfilling the card buffer
+            while (written < data.length) {  // TODO : probably needs fixing to fix SOTA buffer underflow bug
+                int toWrite = Math.min(ioBufferSize, data.length - written);
+                int actuallyWritten = sourceLine.write(data, written, toWrite);
+                written += actuallyWritten;
+            }
+        } catch (Exception e) {  // shouldn't happen
+            e.printStackTrace();
         }
     }
 

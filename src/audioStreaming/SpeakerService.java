@@ -11,7 +11,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 public class SpeakerService {
-    private final BlockingQueue<byte[]> queue = new ArrayBlockingQueue<>(100);  // randomly picked 100. should not get large. avoids memory leak on hang
+    private final BlockingQueue<byte[]> queue = new ArrayBlockingQueue<>(1000);  // randomly picked 100. should not get large.
     private final AudioStreamPlayer speaker = new AudioStreamPlayer(queue);
     private UdpReceiver udpReceiver = null;
 
@@ -39,7 +39,7 @@ public class SpeakerService {
         if (isEnabled()) return true;
 
         try {
-            udpReceiver = new UdpReceiver(port, queue);
+            udpReceiver = new UdpReceiver(port, queue, Properties.getPropAsInt(PropertyKey.KEY_SPK_BUFFER_SIZE));
         } catch (SocketException e) {
             lastError = "Error: unable to bind to requested port for listening: port '"+port+"'";
             return false;
@@ -72,7 +72,9 @@ public class SpeakerService {
         status.volume = -1;
         status.sampleRate = Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_RATE);
         status.bufferSize = Properties.getPropAsInt(PropertyKey.KEY_SPK_BUFFER_SIZE);
-        status.sampleSize = Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE);
+        status.sampleSize_bits = Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE);
+        status.channels = Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS);
+        status.streamPort = this.getPort();
         return status;
     }
 
