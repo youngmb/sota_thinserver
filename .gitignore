@@ -1,7 +1,7 @@
 # Compiled class file and jars
 *.class
 ./bin/
-./jars/
+jars/
 
 # Log file
 *.log

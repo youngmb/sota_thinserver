@@ -14,10 +14,7 @@ public class UdpSender extends UdpStream {
 
     private int sequence = 0; // give each packet a unique, in sequence number
     private final int SEQUENCE_MOD = Properties.getPropAsInt(PropertyKey.KEY_NET_SEQ_MOD);
-
-    private final ByteBuffer buffer = ByteBuffer.allocate(
-            Properties.getPropAsInt(PropertyKey.KEY_MIC_BUFFER_SIZE)
-                    + 4);  // +4 to add the int at the beginning for sequence number
+    private ByteBuffer buffer = null;
 
     public UdpSender(String targetIP,
                      int port,
@@ -31,6 +28,8 @@ public class UdpSender extends UdpStream {
             System.err.println("Err creating new UDP send socket. Shouldn't happen.");
             e.printStackTrace();
         }
+
+        this.buffer = ByteBuffer.allocate(this.bufferSize);
 
         this.target = InetAddress.getByName(targetIP);
         this.port = port;

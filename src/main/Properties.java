@@ -34,6 +34,7 @@ public class Properties {
             sotaProperties = loadProperties();
         return sotaProperties;
     }
+
     public static int getPropAsInt(PropertyKey pk) {
         if (sotaProperties != null && sotaProperties.containsKey(pk.key())) {
             String value = sotaProperties.getProperty(pk.key());
@@ -52,5 +53,9 @@ public class Properties {
           return sotaProperties.getProperty(pk.key());
         else
           return pk.defaultValue();
+    }
+
+    public static void setProperty(PropertyKey pk, String value) {
+        sotaProperties.setProperty(pk.key(), value);
     }
 }

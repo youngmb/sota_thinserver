@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 public class AudioStreamSender implements Runnable {
     private final int sampleRate = Properties.getPropAsInt(PropertyKey.KEY_MIC_SAMPLE_RATE);
-    private final int bufferSize = Properties.getPropAsInt(PropertyKey.KEY_MIC_BUFFER_SIZE);
+    private int bufferSize = 0;
     private final int micSampleSize = Properties.getPropAsInt(PropertyKey.KEY_MIC_SAMPLE_SIZE);
 
     TargetDataLine dataLine = null;
@@ -39,6 +39,7 @@ public class AudioStreamSender implements Runnable {
     }
 
     public void start() {
+        this.bufferSize = Properties.getPropAsInt(PropertyKey.KEY_MIC_BUFFER_SIZE);
         workerThread = new Thread(this, "audio stream sender thread");
         workerThread.start();
     }

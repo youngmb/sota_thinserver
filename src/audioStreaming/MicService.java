@@ -87,8 +87,9 @@ public class MicService {
         String error = "";
         if (status.enabled != null && status.enabled != this.isEnabled()) {  // 'enabled' changed
             if (status.enabled) {  // turn on
-                if (status.streamIP != null)
-                    ip = status.streamIP; // overrule source IP by request IP
+                if (status.streamIP != null) ip = status.streamIP; // overrule source IP by request IP
+
+                if (status.bufferSize != null) Properties.setProperty(PropertyKey.KEY_MIC_BUFFER_SIZE, status.bufferSize.toString());
 
                 if (status.streamPort == null) // we need a port
                     error += "Error enabling microphone, did not receive a port: " +

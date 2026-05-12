@@ -19,7 +19,7 @@ public class SpeakerService {
     private String lastError = null;
 
     public SpeakerService() {
-
+        ; // pass
     }
 
     public String getLastError() {
