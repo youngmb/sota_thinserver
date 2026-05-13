@@ -19,7 +19,7 @@ public enum PropertyKey {
     KEY_SPK_SAMPLE_RATE("speaker_sample_rate", "16000"),
     KEY_SPK_SAMPLE_SIZE("speaker_sample_size", "16"), // bits
     KEY_SPK_BUFFER_SIZE("speaker_buffer_size", "512"),
-    KEY_SPK_CHANNELS("microphone_channels", "1"),
+    KEY_SPK_CHANNELS("speaker_channels", "1"),
     ;
 
     private final String key;
