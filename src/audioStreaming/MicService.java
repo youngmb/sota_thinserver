@@ -1,8 +1,7 @@
 package audioStreaming;
 
 import Udp.UdpSender;
-import httpserver.status.ActionResult;
-import httpserver.status.AudioStatus;
+import httpserver.ActionResult;
 import main.Properties;
 import main.PropertyKey;
 
@@ -82,7 +81,7 @@ public class MicService {
         return status;
     }
 
-    public ActionResult setStatus(AudioStatus status, String ip) {
+    public ActionResult postStatus(AudioStatus status, String ip) {
         // unset parameters are null.
         String error = "";
         if (status.enabled != null && status.enabled != this.isEnabled()) {  // 'enabled' changed

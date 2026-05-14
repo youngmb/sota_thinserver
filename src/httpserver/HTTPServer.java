@@ -4,13 +4,15 @@ import audioStreaming.MicService;
 import audioStreaming.SpeakerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
-import httpserver.status.ActionResult;
-import httpserver.status.AudioStatus;
+import audioStreaming.AudioStatus;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import main.Properties;
 import main.PropertyKey;
 import main.SotaSystemController;
+import sota.motors.MotorService;
+import sota.motors.MotorSystemStatus;
+import sota.motors.SingleMotorStatus;
 
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -37,10 +39,12 @@ public class HTTPServer {
         ctx.json(java.util.Collections.singletonMap( "Error", error ));
     }
 
-    private void createStatusEndpoint(
+    private <getT, postT> void createStatusEndpoint(
             String path,
-            Supplier<AudioStatus> getter,
-            BiFunction<AudioStatus, String, ActionResult> setter) {
+            Supplier<getT> getter,
+            BiFunction<postT, String, ActionResult> setter,
+            Class<postT> postType  // needed because of type erasure
+    ) {
 
         app.get(path, ctx -> {
             ctx.json(getter.get());
@@ -48,7 +52,7 @@ public class HTTPServer {
 
         app.post(path, ctx -> {
             try {
-                AudioStatus req = mapper.readValue(ctx.body(), (Class<AudioStatus>) AudioStatus.class);
+                postT req = mapper.readValue(ctx.body(), postType);
                 ActionResult ar = setter.apply(req, ctx.ip());
 
                 if (ar.success)
@@ -65,11 +69,13 @@ public class HTTPServer {
         });
     }
 
+    // THESE are templated but Java solves the template types by the parameter list
     public void enableMicEndpoints(MicService micService) {
         createStatusEndpoint(
                 "/mic",
                 micService::getStatus,
-                micService::setStatus
+                micService::postStatus,
+                AudioStatus.class
         );
     }
 
@@ -77,7 +83,36 @@ public class HTTPServer {
         createStatusEndpoint(
                 "/speaker",
                 speakerService::getStatus,
-                (req, ip) -> speakerService.setStatus(req)
+                speakerService::postStatus,
+                AudioStatus.class
         );
+    }
+
+    public void enableMotorEndpoints(MotorService motorService) {
+
+        // general motor information
+        createStatusEndpoint(
+                "/motors",
+                motorService::getSystemStatus,
+                motorService::postSystemStatus,
+                MotorSystemStatus.class
+        );
+
+        // joint-space radians
+        createStatusEndpoint(
+                "/motors/joint",
+                motorService::getJointStatus,
+                motorService::postJointStatus,
+                SingleMotorStatus.class
+        );
+
+        // world-space cartesian coordinates
+        createStatusEndpoint(
+                "/motors/world",
+                motorService::getWorldStatus,
+                motorService::postWorldStatus,
+                SingleMotorStatus.class
+        );
+
     }
 }

@@ -1,8 +1,7 @@
 package audioStreaming;
 
 import Udp.UdpReceiver;
-import httpserver.status.ActionResult;
-import httpserver.status.AudioStatus;
+import httpserver.ActionResult;
 import main.Properties;
 import main.PropertyKey;
 
@@ -78,7 +77,7 @@ public class SpeakerService {
         return status;
     }
 
-    public ActionResult setStatus(AudioStatus status) {
+    public ActionResult postStatus(AudioStatus status, String _unused) {
         // unset parameters are null.
         String error = "";
 
