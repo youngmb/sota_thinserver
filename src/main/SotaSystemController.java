@@ -20,7 +20,10 @@ public class SotaSystemController {
     }
 
     public void start() {
-        sota.start();  // start the Sota subsystem
+        if (!sota.start()) {  // start the Sota subsystem
+            System.out.println("CRITICAL: could not start the Sota subsystem, many features will likely not work.");
+
+        }
 
         httpServer = new HTTPServer(this);
         httpServer.enableMicEndpoints(micService);
