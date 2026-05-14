@@ -2,9 +2,11 @@ package sota.motors;
 
 import httpserver.ActionResult;
 import sota.SotaConnector;
+import sota.kinematics.ServoRangeTool;
 
 public class MotorService {
 
+    boolean motorsEnabled = false;
     SotaConnector sota;
 
     public MotorService(SotaConnector sota) {
@@ -15,7 +17,7 @@ public class MotorService {
         MotorSystemStatus status = new MotorSystemStatus();
         status.enabled = sota.isMotorsEnabled();
 
-        for (String key : SotaConnector.motorIdByName.keySet()) {
+        for (String key : ServoRangeTool.motorIdByName.keySet()) {
             status.motorCapabilities.add(new MotorSystemStatus.MotorCapability(
                 key, sota.ranges.getMinRad(key), sota.ranges.getMaxRad(key)
             ));
@@ -24,7 +26,16 @@ public class MotorService {
     }
 
     public ActionResult postSystemStatus(MotorSystemStatus status, String _unused) {
-        return null;
+        if (status.enabled != null && status.enabled != this.motorsEnabled) {  // 'enabled' changed
+            if (status.enabled) { // turn on
+                sota.enableMotors();
+                this.motorsEnabled = true;
+            } else { // request to disable
+                sota.disableMotors();
+                this.motorsEnabled = false;
+            }
+        }
+        return ActionResult.ok();
     }
 
     public SingleMotorStatus getJointSpaceStatus() {

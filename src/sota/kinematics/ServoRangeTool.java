@@ -24,9 +24,9 @@ public class ServoRangeTool implements Serializable {
 
     // caching of creating pose objects, to accelerate multiple accesses
     boolean _initialized = false;
-    private Byte[] _servoIDs = null;   
+    private Byte[] _servoIDs = null;
 
-    final static String FILENAME = "motorranges.dat";
+    final public static String DEFAULT_FILENAME = "motorranges.dat";
 
     // map to support type-safe String-> motor ID
     public static final Map<String, Byte> motorIdByName = new HashMap<>();
@@ -41,7 +41,7 @@ public class ServoRangeTool implements Serializable {
         motorIdByName.put("HEAD_R", CSotaMotion.SV_HEAD_R);
     }
 
-    ServoRangeTool(Byte[] servoIDs) {
+    public ServoRangeTool(Byte[] servoIDs) {
         this._servoIDs = servoIDs;
         setupMotorRanges();
     }
@@ -161,7 +161,7 @@ public class ServoRangeTool implements Serializable {
 
     ///==================== LOAD AND SAVE
     ///====================
-    public static ServoRangeTool Load(){ return ServoRangeTool.Load(FILENAME);}
+    public static ServoRangeTool Load(){ return ServoRangeTool.Load(DEFAULT_FILENAME);}
     public static ServoRangeTool Load(String filename){
         ServoRangeTool s = null;
         try(
@@ -178,7 +178,7 @@ public class ServoRangeTool implements Serializable {
         return s;
     }
 
-    public void save() { save(FILENAME);}
+    public void save() { save(DEFAULT_FILENAME);}
     public void save(String filename) {
         try(
             FileOutputStream fout = new FileOutputStream(filename);

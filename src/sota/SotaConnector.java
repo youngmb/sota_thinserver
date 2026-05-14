@@ -12,7 +12,6 @@ public class SotaConnector  {
 
     private final String TAG = "Sota Thinserver Connector";
 
-//    CRobotPose _sotaPose = new CRobotPose();
     CRobotMem sotaMem = new CRobotMem();
     CSotaMotion sotaMotion = new CSotaMotion(sotaMem);
     boolean motorsEnabled = false;
@@ -33,28 +32,18 @@ public class SotaConnector  {
             return false;
         }
 
+
         CRobotUtil.Log(TAG, "connected " + TAG);
         sotaMotion.InitRobot_Sota();  // initialize the Sota VSMD
         CRobotUtil.Log(TAG, "Rev. " + sotaMem.FirmwareRev.get());
 
         ranges = ServoRangeTool.Load();
-        if (ranges == null)
+        if (ranges == null) {
+            CRobotUtil.Log(TAG, "Failed to load servo ranges");
             return false;
+        }
         CRobotUtil.Log(TAG, "Servo Ranges Loaded");
 
         return true;
     }
-//    void run() {
-//
-//        _sotaMotion.ServoOn();
-//        CRobotUtil.Log(TAG, "Servos On"); // initialize in on state
-//
-//        Short[] startPose = new Short[]{-20, -261, -568, 261, 568, 31, -95, 26};  // a neutral stance
-//        CRobotPose pose = new CRobotPose();
-//        pose.SetPose(_sotaMotion.getDefaultIDs(), startPose);
-//        _sotaMotion.play(pose, 1000);
-//        _sotaMotion.waitEndinterpAll();
-//        }
-//    }
-
 }
