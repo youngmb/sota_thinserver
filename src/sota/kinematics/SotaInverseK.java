@@ -37,7 +37,7 @@ public class SotaInverseK {
     // given frame type. Creates both JTypes.
     private void makeJacobian(RealVector currentAngles, FrameKeys frameType) {
         final int JACOBIANS = JType.values().length; // 2 because each frame produces an O and an R
-        final int JOINT_DIM = frameType.motorindices.length; // inputs.
+        final int JOINT_DIM = frameType.motorIndices.length; // inputs.
 
         SotaForwardK currentFK = new SotaForwardK(currentAngles);
 
@@ -45,8 +45,8 @@ public class SotaInverseK {
         RealMatrix[] J = new RealMatrix[JACOBIANS];
         for (int i=0; i<JACOBIANS;i++) J[i] = MatrixUtils.createRealMatrix( JType.OUT_DIM, JOINT_DIM );
 
-        for (int motor=0; motor < frameType.motorindices.length; motor++) { // go through each joint. inputs
-            int j = frameType.motorindices[motor];
+        for (int motor = 0; motor < frameType.motorIndices.length; motor++) { // go through each joint. inputs
+            int j = frameType.motorIndices[motor];
             
             Double angleBackup = deltaAngles[j];  // perturb that joint and calculate the new FK result.
             deltaAngles[j] += NUMERICAL_DELTA_rad;
@@ -93,8 +93,8 @@ public class SotaInverseK {
  
             SotaInverseK IK = new SotaInverseK(theta, frameType);  // resolve IK at updated theta
             RealVector deltaTheta = IK.Jinv[jtype.ordinal()].get(frameType).operate(errorVec); // update target with jacobian
-            for (int j=0; j < frameType.motorindices.length; j++)
-                theta.addToEntry(frameType.motorindices[j], deltaTheta.getEntry(j));
+            for (int j = 0; j < frameType.motorIndices.length; j++)
+                theta.addToEntry(frameType.motorIndices[j], deltaTheta.getEntry(j));
 
             tries++;
         }

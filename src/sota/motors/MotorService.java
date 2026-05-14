@@ -1,10 +1,7 @@
 package sota.motors;
 
 import httpserver.ActionResult;
-import main.SotaSystemController;
 import sota.SotaConnector;
-
-import java.util.Map;
 
 public class MotorService {
 
@@ -30,19 +27,19 @@ public class MotorService {
         return null;
     }
 
-    public SingleMotorStatus getJointStatus() {
+    public SingleMotorStatus getJointSpaceStatus() {
         return null;
     }
 
-    public ActionResult postJointStatus(SingleMotorStatus status, String _unused) {
+    public ActionResult postJointSpaceStatus(SingleMotorStatus status, String _unused) {
         return null;
     }
 
-    public SingleMotorStatus getWorldStatus() {
+    public SingleMotorStatus getWorldSpaceStatus() {
         return null;
     }
 
-    public ActionResult postWorldStatus(SingleMotorStatus status, String _unused) {
+    public ActionResult postWorldSpaceStatus(SingleMotorStatus status, String _unused) {
         return null;
     }
 }

@@ -100,17 +100,17 @@ public class HTTPServer {
 
         // joint-space radians
         createStatusEndpoint(
-                "/motors/joint",
-                motorService::getJointStatus,
-                motorService::postJointStatus,
+                "/motors/jointspace",
+                motorService::getJointSpaceStatus,
+                motorService::postJointSpaceStatus,
                 SingleMotorStatus.class
         );
 
         // world-space cartesian coordinates
         createStatusEndpoint(
-                "/motors/world",
-                motorService::getWorldStatus,
-                motorService::postWorldStatus,
+                "/motors/worldspace",
+                motorService::getWorldSpaceStatus,
+                motorService::postWorldSpaceStatus,
                 SingleMotorStatus.class
         );
 
