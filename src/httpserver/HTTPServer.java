@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 
 public class HTTPServer {
     Javalin app = null;
-//    SotaSystemController controller = null;
+
     private final ObjectMapper mapper = new ObjectMapper();
 
     public HTTPServer(SotaSystemController controller) {
@@ -27,8 +27,6 @@ public class HTTPServer {
         app = Javalin.create(config -> {
             config.defaultContentType = "application/json";
         }).start(httpPort);
-
-//        this.controller = controller;
 
         ObjectMapper mapper = new ObjectMapper();  // manual JSON parsing for better error handling
         mapper.findAndRegisterModules();
@@ -92,7 +90,7 @@ public class HTTPServer {
 
         // general motor information
         createStatusEndpoint(
-                "/motors",
+                "/motors/info",
                 motorService::getSystemStatus,
                 motorService::postSystemStatus,
                 MotorSystemStatus.class
@@ -113,6 +111,5 @@ public class HTTPServer {
                 motorService::postWorldSpaceStatus,
                 SingleMotorStatus.class
         );
-
     }
 }

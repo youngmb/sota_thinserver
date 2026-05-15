@@ -2,7 +2,10 @@ package sota.motors;
 
 import httpserver.ActionResult;
 import sota.SotaConnector;
+import sota.kinematics.Frames;
+import sota.kinematics.MatrixHelp;
 import sota.kinematics.ServoRangeTool;
+import sota.kinematics.SotaForwardK;
 
 public class MotorService {
 
@@ -39,7 +42,10 @@ public class MotorService {
     }
 
     public SingleMotorStatus getJointSpaceStatus() {
-        return null;
+        SotaForwardK FK = new SotaForwardK(ranges.calcAngles(_sotaMotion.getReadPose()));
+        double[] leftCenter = MatrixHelp.getTrans(FK.frames.get(Frames.FrameKeys.L_HAND)).toArray();
+        double[] rightCenter = MatrixHelp.getTrans(FK.frames.get(Frames.FrameKeys.R_HAND)).toArray();
+        double[] headCenter = MatrixHelp.getTrans(FK.frames.get(Frames.FrameKeys.HEAD)).toArray();
     }
 
     public ActionResult postJointSpaceStatus(SingleMotorStatus status, String _unused) {
