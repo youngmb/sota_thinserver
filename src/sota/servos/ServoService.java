@@ -57,10 +57,10 @@ public class ServoService {
         return status;
     }
 
-    public ActionResult postJointSpaceStatus(ServosStatus status, String _unused) {
+    public ActionResult postJointSpaceStatus(ServosCommand command, String _unused) {
         Map<Byte, Short> poseMap = new HashMap<>();
 
-        for (ServosStatus.ServoStatus motor: status.motorsStatus) {
+        for (ServosStatus.ServoStatus motor: command.motorsStatus) {
             if (motor.motor_id != null) {  // otherwise skip
                 Byte id = ServoMappingTools.motorIdByName.get(motor.motor_id);
                 if (motor.radians != null) {
@@ -72,7 +72,7 @@ public class ServoService {
 
         CRobotPose pose = new CRobotPose();
         pose.SetPose(poseMap);
-        sota.addPoseToActionQueue(pose, status.move_msec);
+        sota.addPoseToActionQueue(pose, command.move_msec);
         return ActionResult.ok();
     }
 

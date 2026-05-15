@@ -12,6 +12,7 @@ import main.PropertyKey;
 import main.SotaSystemController;
 import sota.servos.ServoService;
 import sota.servos.ServoSystemStatus;
+import sota.servos.ServosCommand;
 import sota.servos.ServosStatus;
 
 import java.util.function.BiFunction;
@@ -101,7 +102,7 @@ public class HTTPServer {
                 "/servos/jointspace",
                 motorService::getJointSpaceStatus,
                 motorService::postJointSpaceStatus,
-                ServosStatus.class
+                ServosCommand.class
         );
 
         // world-space cartesian coordinates
