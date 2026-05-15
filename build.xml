@@ -5,8 +5,8 @@
 
         <!--ip -->
         <!--- For Sota -->
-<!--        <property name="scp.server" value="10.0.0.178"/>-->
-        <property name="scp.server" value="192.168.0.23"/>
+        <property name="scp.server" value="10.151.63.71"/>
+<!--        <property name="scp.server" value="192.168.0.23"/>-->
          
         <!--scp credentials -->
         <property name="scp.edison.user" value="root"  />
@@ -27,7 +27,7 @@
 
         <!--runnable classpath. Update if you need new libraries -->
         <property name="jar.classpath"
-        	value=". /home/vstone/lib/jackson-annotations-2.10.5.jar /home/vstone/lib/jackson-core-2.10.5.jar /home/vstone/lib/jackson-databind-2.10.5.jar /home/vstone/lib/websocket-api-9.4.58.v20250814.jar /home/vstone/lib/jetty-io-9.4.58.v20250814.jar /home/vstone/lib/jetty-security-9.4.58.v20250814.jar /home/vstone/lib/jetty-http-9.4.58.v20250814.jar /home/vstone/lib/jetty-util-9.4.58.v20250814.jar /home/vstone/lib/websocket-common-9.4.58.v20250814.jar /home/vstone/lib/websocket-server-9.4.58.v20250814.jar /home/vstone/lib/websocket-servlet-9.4.58.v20250814.jar /home/vstone/lib/slf4j-api-1.7.36.jar /home/vstone/lib/slf4j-simple-1.7.36.jar /home/vstone/lib/javalin-3.13.13.jar /home/vstone/lib/javax.servlet-api-3.1.0.jar /home/vstone/lib/jetty-server-9.4.58.v20250814.jar /home/vstone/lib/jetty-servlet-9.4.58.v20250814.jar /home/vstone/lib/kotlin-stdlib-1.6.21.jar /home/vstone/lib/kotlin-stdlib-common-1.6.21.jar /home/vstone/lib/kotlin-stdlib-jdk8-1.6.21.jar /home/vstone/lib/commons-math3-3.6.1.jar /home/vstone/lib/sotalib.jar /home/vstone/lib/SRClientHelper.jar /home/vstone/lib/core-2.2.jar /home/vstone/lib/javase-2.2.jar  /home/vstone/lib/jna-4.1.0.jar /home/vstone/lib/gson-2.6.1.jar /usr/local/share/OpenCV/java/opencv-310.jar"/>
+        	value=". /home/vstone/lib/commons-math3-3.6.1.jar /home/vstone/lib/jackson-annotations-2.10.5.jar /home/vstone/lib/jackson-core-2.10.5.jar /home/vstone/lib/jackson-databind-2.10.5.jar /home/vstone/lib/websocket-api-9.4.58.v20250814.jar /home/vstone/lib/jetty-io-9.4.58.v20250814.jar /home/vstone/lib/jetty-security-9.4.58.v20250814.jar /home/vstone/lib/jetty-http-9.4.58.v20250814.jar /home/vstone/lib/jetty-util-9.4.58.v20250814.jar /home/vstone/lib/websocket-common-9.4.58.v20250814.jar /home/vstone/lib/websocket-server-9.4.58.v20250814.jar /home/vstone/lib/websocket-servlet-9.4.58.v20250814.jar /home/vstone/lib/slf4j-api-1.7.36.jar /home/vstone/lib/slf4j-simple-1.7.36.jar /home/vstone/lib/javalin-3.13.13.jar /home/vstone/lib/javax.servlet-api-3.1.0.jar /home/vstone/lib/jetty-server-9.4.58.v20250814.jar /home/vstone/lib/jetty-servlet-9.4.58.v20250814.jar /home/vstone/lib/kotlin-stdlib-1.6.21.jar /home/vstone/lib/kotlin-stdlib-common-1.6.21.jar /home/vstone/lib/kotlin-stdlib-jdk8-1.6.21.jar /home/vstone/lib/commons-math3-3.6.1.jar /home/vstone/lib/sotalib.jar /home/vstone/lib/SRClientHelper.jar /home/vstone/lib/core-2.2.jar /home/vstone/lib/javase-2.2.jar  /home/vstone/lib/jna-4.1.0.jar /home/vstone/lib/gson-2.6.1.jar /usr/local/share/OpenCV/java/opencv-310.jar"/>
 
         <path id="build.lib">   <!-- include all jars in the listed lib dir into our classpath-->
                 <fileset dir="${lib.dir}" includes="*.jar" />
@@ -72,7 +72,30 @@
         <target name="make_jars" depends="compile">
                 <antcall target="__make_jar">
                         <param name="jar.class" value="main.SotaSystemController" />
-                        <param name="jar.name" value="SotaDialog.jar" />
+                        <param name="jar.name" value="SotaThinServer.jar" />
+                </antcall>
+                <antcall target="__make_jar">
+                        <param name="jar.class" value="sota.supportPrograms.ServoRangeCalibrator" />
+                        <param name="jar.name" value="ServoRangeCalibrator.jar" />
+                </antcall>
+                <antcall target="__make_jar">
+                        <param name="jar.class" value="sota.supportPrograms.ServoAngleReader" />
+                        <param name="jar.name" value="ServoAngleReader.jar" />
+                </antcall>
+
+                <antcall target="__make_jar">
+                        <param name="jar.class" value="sota.supportPrograms.ServoFKTest" />
+                        <param name="jar.name" value="ServoFKTest.jar" />
+                </antcall>
+
+                <antcall target="__make_jar">
+                        <param name="jar.class" value="sota.supportPrograms.ServoIKTest" />
+                        <param name="jar.name" value="ServoIKTest.jar" />
+                </antcall>
+
+                <antcall target="__make_jar">
+                        <param name="jar.class" value="sota.supportPrograms.ServoRangeTest" />
+                        <param name="jar.name" value="ServoRangeTest.jar" />
                 </antcall>
 <!--               <antcall target="__make_jar">-->
 <!--                        <param name="jar.class" value="old.test.TestSotaDialogController" />-->
