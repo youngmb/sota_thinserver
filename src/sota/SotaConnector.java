@@ -86,13 +86,13 @@ public class SotaConnector implements Runnable {
         this.sotaThreadKey = sotaMotion.getThreadkey();  // steal Sota's thread key in the same thread we started the subsystem
 
         running = true;
-        workerThread = new Thread(this, "audio stream player thread");
+        workerThread = new Thread(this, "queue draining worker thread");
         workerThread.start();
 
         return true;
     }
 
-    public void stop() {  //TODO: currently the system has no clean shutdown implemented in SotaSystemController
+    public void stop() {
         running = false;
         if (workerThread != null) {
             workerThread.interrupt();

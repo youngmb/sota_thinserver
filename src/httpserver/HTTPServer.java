@@ -33,6 +33,11 @@ public class HTTPServer {
         mapper.findAndRegisterModules();
     }
 
+    public void stop() {
+        if (app != null)
+            app.stop();
+    }
+
     private void setCtxError(Context ctx, String error) {
         ctx.status(400); // malformed request
         ctx.json(java.util.Collections.singletonMap( "Error", error ));

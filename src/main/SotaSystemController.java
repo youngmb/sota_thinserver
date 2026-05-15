@@ -29,8 +29,19 @@ public class SotaSystemController {
         httpServer.enableMotorEndpoints(motorService);
     }
 
+    public void stop() {
+        if (httpServer != null)
+            httpServer.stop();
+        if (sota != null)
+            sota.stop();
+    }
+
     public static void main(String [] args) {
         SotaSystemController controller = new SotaSystemController();
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> { // register shutdown hook to cleanly stop on SIGINT
+            System.out.println("Shutting down...");
+            controller.stop();
+        }));
         controller.start();
     }
 }
