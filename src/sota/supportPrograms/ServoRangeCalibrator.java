@@ -1,7 +1,7 @@
 package sota.supportPrograms;
 
 import jp.vstone.RobotLib.*;
-import sota.kinematics.ServoRangeTool;
+import sota.kinematics.ServoMappingTools;
 
 public class MotorRangeCalibrator {
 	static final String TAG = "MotorRangeCalibrator";   // set this to support the Sota logging system
@@ -31,7 +31,7 @@ public class MotorRangeCalibrator {
 		CRobotUtil.Log(TAG, "Servos Off");
 		_sotaMotion.ServoOff();
 
-		ServoRangeTool ranges = new ServoRangeTool(_sotaMotion.getDefaultIDs());
+		ServoMappingTools ranges = new ServoMappingTools(_sotaMotion.getDefaultIDs());
 
 		System.out.print("\033[H\033[2J"); System.out.flush();
 		while (!_sotaMotion.isButton_Power()) {
@@ -44,7 +44,7 @@ public class MotorRangeCalibrator {
 			CRobotUtil.wait(100);
 		}
 		ranges.save();
-		CRobotUtil.Log(TAG, "Ranges saved in default file "+ServoRangeTool.DEFAULT_FILENAME);
+		CRobotUtil.Log(TAG, "Ranges saved in default file "+ ServoMappingTools.DEFAULT_FILENAME);
 	}
 
 	public static void main(String args[]){

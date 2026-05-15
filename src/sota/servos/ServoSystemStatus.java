@@ -3,10 +3,10 @@ package sota.motors;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MotorSystemStatus {
+public class ServoSystemStatus {
 
     public Boolean enabled = false;
-    public List<MotorCapability> motorCapabilities = new ArrayList<MotorCapability>();
+    public List<MotorCapability> motorCapabilities = new ArrayList<>();
 
     public static class MotorCapability {
         public String motor_id;

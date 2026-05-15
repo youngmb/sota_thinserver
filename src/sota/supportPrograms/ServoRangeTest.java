@@ -1,7 +1,7 @@
 package sota.supportPrograms;
 
 import jp.vstone.RobotLib.*;
-import sota.kinematics.ServoRangeTool;
+import sota.kinematics.ServoMappingTools;
 
 public class MotorRangeTest {
 	static final String TAG = "MotorRangeTest";   // set this to support the Sota logging system
@@ -31,7 +31,7 @@ public class MotorRangeTest {
 
 	void run() {
 		Byte[] servoIDs = _sotaMotion.getDefaultIDs();
-		ServoRangeTool ranges = ServoRangeTool.Load();
+		ServoMappingTools ranges = ServoMappingTools.Load();
 		CRobotUtil.Log(TAG, "Servo Ranges Loaded");
 		ranges.printMotorRanges();
 

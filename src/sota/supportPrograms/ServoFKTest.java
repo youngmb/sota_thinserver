@@ -2,7 +2,7 @@ package sota.supportPrograms;
 
 import jp.vstone.RobotLib.*;
 import sota.kinematics.MatrixHelp;
-import sota.kinematics.ServoRangeTool;
+import sota.kinematics.ServoMappingTools;
 import sota.kinematics.SotaForwardK;
 import sota.kinematics.Frames.FrameKeys;
 
@@ -32,7 +32,7 @@ public class MotorFKTest {
 
 	void run() {
 
-		ServoRangeTool ranges = ServoRangeTool.Load();
+		ServoMappingTools ranges = ServoMappingTools.Load();
 		CRobotUtil.Log(TAG, "Servo Ranges Loaded");
 		ranges.printMotorRanges(_sotaMotion.getReadpos());
 
