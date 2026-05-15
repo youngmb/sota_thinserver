@@ -142,7 +142,7 @@ public class ServoMappingTools implements Serializable {
         return ( percent*(radRange[1]-radRange[0]) )+radRange[0];
     }
 
-    private short radToPos(Byte servoID, double angle) { // convert angles, in radians, to motor position
+    public short radToPos(Byte servoID, double angle) { // convert angles, in radians, to motor position
         Byte index = IDtoIndex.get(servoID);
         double[] radRange = _motorRanges_rad.get(servoID);
         double radPercent = (angle - radRange[0]) / (radRange[1]-radRange[0]);

@@ -1,9 +1,13 @@
 package sota;
 
 import jp.vstone.RobotLib.CRobotMem;
+import jp.vstone.RobotLib.CRobotPose;
 import jp.vstone.RobotLib.CRobotUtil;
 import jp.vstone.RobotLib.CSotaMotion;
 import sota.kinematics.*;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class SotaConnector  {
 
@@ -12,30 +16,33 @@ public class SotaConnector  {
     CRobotMem sotaMem = new CRobotMem();
     CSotaMotion sotaMotion = new CSotaMotion(sotaMem);
     boolean motorsEnabled = false;
+    String sotaThreadKey=null;
 
     public ServoMappingTools servoMapper = null;
+
+    private final BlockingQueue<ActionQueueEntry> sotaActionQueue = new ArrayBlockingQueue<>(1000); // TODO: NAME AND THINK ABOUT QUEUE SIZE
+
+    static private class ActionQueueEntry {
+        CRobotPose pose;
+        int msec;
+        ActionQueueEntry(CRobotPose pose, int msec){
+            this.pose=pose; this.msec=msec;
+        }
+    }
+
 
     public SotaConnector() {
     ; // pass
     }
 
-    public void enableMotors() { sotaMotion.play(sotaMotion.getReadPose(),0); sotaMotion.ServoOn(); motorsEnabled = true;}
+    public void enableMotors() { sotaMotion.ServoOn(); motorsEnabled = true;}
     public void disableMotors() { sotaMotion.ServoOff(); motorsEnabled = false;}
     public boolean isMotorsEnabled() { return motorsEnabled; }
 
-//    public Short[] getMotorValues() {
-//        CRobotPose pose = sotaMotion.getReadPose();
-//        return pose.getServoAngles(sotaMotion.getDefaultIDs());
-//    }
-
-    public void setSparseMotorValuesInRadians(Double[] target_angles, int msec) { // only update for non-null entries
-        double[] angles = servoMapper.calcAngles_array(sotaMotion.getReadPose());
-
-        for (int i = 0; i < target_angles.length; i++) {  // only change motors for which new values arrived
-            if (target_angles[i] == null) continue;
-            angles[i] = target_angles[i];
-        }
-        sotaMotion.play(servoMapper.makePose_fromRadians(angles), msec);
+    public void addPoseToActionQueue(CRobotPose pose, int msec) { // only update for non-null entries
+        sotaActionQueue.add(new ActionQueueEntry(pose, msec));
+        sotaMotion.play(pose, msec, this.sotaThreadKey);
+//        sotaMotion.waitEndinterpAll();
     }
 
     public double[] getMotorValuesAsRadians() {return servoMapper.calcAngles_array(sotaMotion.getReadPose());}
@@ -58,6 +65,12 @@ public class SotaConnector  {
         }
         CRobotUtil.Log(TAG, "Servo Ranges Loaded");
 
+        this.sotaThreadKey = sotaMotion.getThreadkey();
+
+        // spin up sota action thread queue
+
         return true;
     }
+
+    //RUN
 }

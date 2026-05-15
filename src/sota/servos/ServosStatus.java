@@ -13,5 +13,6 @@ public class ServosStatus {
         ServoStatus(String motor_id, Double radians){
             this.motor_id = motor_id; this.radians = radians;
         }
+        ServoStatus() {}
     }
 }

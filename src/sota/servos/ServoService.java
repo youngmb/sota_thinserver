@@ -1,10 +1,14 @@
 package sota.servos;
 
 import httpserver.ActionResult;
+import jp.vstone.RobotLib.CRobotPose;
 import sota.SotaConnector;
 import sota.kinematics.ServoMappingTools;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class ServoService {
 
@@ -54,18 +58,22 @@ public class ServoService {
     }
 
     public ActionResult postJointSpaceStatus(ServosStatus status, String _unused) {
-        Double[] angles = new Double[ServoMappingTools.SERVO_COUNT];
+        Map<Byte, Short> poseMap = new HashMap<>();
 
         for (ServosStatus.ServoStatus motor: status.motorsStatus) {
             if (motor.motor_id != null) {  // otherwise skip
-                Byte index = ServoMappingTools.IDtoIndex.get(  ServoMappingTools.motorIdByName.get(motor.motor_id)  );
-                if (motor.radians != null)
-                   angles[index] = motor.radians;
+                Byte id = ServoMappingTools.motorIdByName.get(motor.motor_id);
+                if (motor.radians != null) {
+                    short motorPosition = sota.servoMapper.radToPos(id, motor.radians);
+                    poseMap.put(id, motorPosition);
+                }
             }
         }
 
-        sota.setSparseMotorValuesInRadians(angles, status.move_msec);
-        return null;
+        CRobotPose pose = new CRobotPose();
+        pose.SetPose(poseMap);
+        sota.addPoseToActionQueue(pose, status.move_msec);
+        return ActionResult.ok();
     }
 
     public ServosStatus getWorldSpaceStatus() {
