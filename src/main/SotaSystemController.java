@@ -4,7 +4,7 @@ import audioStreaming.MicService;
 import audioStreaming.SpeakerService;
 import httpserver.HTTPServer;
 import sota.SotaConnector;
-import sota.motors.MotorService;
+import sota.servos.ServoService;
 
 public class SotaSystemController {
     private HTTPServer httpServer = null;
@@ -13,17 +13,15 @@ public class SotaSystemController {
 
     private final MicService micService = new MicService();
     private final SpeakerService speakerService = new SpeakerService();
-    private final MotorService motorService = new MotorService(sota);
+    private final ServoService motorService = new ServoService(sota);
 
     public SotaSystemController() {
         ; // pass
     }
 
     public void start() {
-        if (!sota.start()) {  // start the Sota subsystem
+        if (!sota.start())  // start the Sota subsystem
             System.out.println("CRITICAL: could not start the Sota subsystem, many features will likely not work.");
-
-        }
 
         httpServer = new HTTPServer(this);
         httpServer.enableMicEndpoints(micService);
@@ -35,5 +33,4 @@ public class SotaSystemController {
         SotaSystemController controller = new SotaSystemController();
         controller.start();
     }
-
 }

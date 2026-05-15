@@ -13,20 +13,12 @@ import java.util.Map;
 import jp.vstone.RobotLib.CRobotPose;
 import jp.vstone.RobotLib.CSotaMotion;
 
-public class ServoRangeTool implements Serializable {
+public class ServoMappingTools implements Serializable {
     private static final long serialVersionUID = 1L;
-    
-    public static TreeMap<Byte, Byte> IDtoIndex = null;
-
-    private Short[] _minpos = null;  // internal arrays for precalcualted values
-    private Short[] _maxpos = null;
-    private Short[] _midpos = null;
-
-    // caching of creating pose objects, to accelerate multiple accesses
-    boolean _initialized = false;
-    private Byte[] _servoIDs = null;
 
     final public static String DEFAULT_FILENAME = "motorranges.dat";
+
+    final public static int SERVO_COUNT = 8;
 
     // map to support type-safe String-> motor ID
     public static final Map<String, Byte> motorIdByName = new HashMap<>();
@@ -41,7 +33,17 @@ public class ServoRangeTool implements Serializable {
         motorIdByName.put("HEAD_R", CSotaMotion.SV_HEAD_R);
     }
 
-    public ServoRangeTool(Byte[] servoIDs) {
+    public static TreeMap<Byte, Byte> IDtoIndex = null;
+
+    private Short[] _minpos = null;  // internal arrays for precalcualted values
+    private Short[] _maxpos = null;
+    private Short[] _midpos = null;
+
+    // caching of creating pose objects, to accelerate multiple accesses
+    boolean _initialized = false;
+    private Byte[] _servoIDs = null;
+
+    public ServoMappingTools(Byte[] servoIDs) {
         this._servoIDs = servoIDs;
         setupMotorRanges();
     }
@@ -52,8 +54,8 @@ public class ServoRangeTool implements Serializable {
             IDtoIndex = new TreeMap<>();
             for (int i=0; i < _servoIDs.length; i++)
                 IDtoIndex.put(_servoIDs[i], Byte.valueOf((byte)i));
-        }        
-        
+        }
+
         this._motorRanges_rad = new TreeMap<Byte, double[]>() {{   // lower and upper radian range
             put(CSotaMotion.SV_BODY_Y, new double[]{-1.077363736, 1.077363736} );
             put(CSotaMotion.SV_L_ELBOW, new double[]{-1.745329252, 1.221730476} );
@@ -72,7 +74,7 @@ public class ServoRangeTool implements Serializable {
             _maxpos = (Short[])pos.clone();
             _midpos = (Short[])pos.clone();
             _initialized = true;
-        } else 
+        } else
         for (int i=0; i < pos.length; i++) {
             _minpos[i] = (short)Math.min(_minpos[i], pos[i]);
 			_maxpos[i] = (short)Math.max(_maxpos[i], pos[i]);
@@ -82,15 +84,25 @@ public class ServoRangeTool implements Serializable {
 
     ///==================== Export as CRobotPose objects
     ///====================
-    private CRobotPose makePose(Short[] pos) {
+    private CRobotPose makePose_fromPositions(Short[] pos) {
         CRobotPose pose = new CRobotPose();
         pose.SetPose(_servoIDs, pos);
-        return pose; 
+        return pose;
     }
 
-    public CRobotPose getMinPose() { return makePose(_minpos);}
-    public CRobotPose getMaxPose() { return makePose(_maxpos);}
-    public CRobotPose getMidPose() { return makePose(_midpos);}
+    public CRobotPose makePose_fromRadians(double[] pos) {
+        Short[] motorPositions = new Short[pos.length];
+
+        for (int i=0; i<motorPositions.length; i++)
+            motorPositions[i] = radToPos(_servoIDs[i], pos[i]);
+        CRobotPose pose = new CRobotPose();
+        pose.SetPose(_servoIDs, motorPositions);
+        return pose;
+    }
+
+    public CRobotPose getMinPose() { return makePose_fromPositions(_minpos);}
+    public CRobotPose getMaxPose() { return makePose_fromPositions(_maxpos);}
+    public CRobotPose getMidPose() { return makePose_fromPositions(_midpos);}
 
     public double getMinRad(String servoID) { return getMinRad(motorIdByName.get(servoID));}
     public double getMinRad(Byte servoID) {return _motorRanges_rad.get(servoID)[0];}
@@ -100,25 +112,26 @@ public class ServoRangeTool implements Serializable {
 
     ///==================== Angle <-> motor pos conversions
     ///====================
-    public RealVector calcAngles(CRobotPose pose) { // convert pose in motor positions to radians
+    public RealVector calcAngles_vector(CRobotPose pose) { return MatrixUtils.createRealVector(calcAngles_array(pose));}
+    public double[] calcAngles_array(CRobotPose pose) { // convert pose in motor positions to radians
         Short[] rawAngles = pose.getServoAngles(_servoIDs);
         double[] angles = new double[rawAngles.length];
 
         for (int i=0; i<rawAngles.length; i++)
             angles[i] = posToRad(_servoIDs[i], rawAngles[i]);
-       
-        return MatrixUtils.createRealVector(angles);
+
+        return angles;
     }
 
-    public CRobotPose calcMotorValues(RealVector angles) { // convert pose in angles to motor positions
+    public CRobotPose calcMotorValues_vector(RealVector angles) { // convert pose in angles to motor positions
         Short[] rawAngles = new Short[angles.getDimension()];
 
         for (int i=0; i<rawAngles.length; i++)
             rawAngles[i] = radToPos(_servoIDs[i], angles.getEntry(i));
-       return makePose(rawAngles);
+       return makePose_fromPositions(rawAngles);
     }
 
-    private double posToRad(Byte servoID, Short pos) { // convert motor position to angle, in radians 
+    private double posToRad(Byte servoID, Short pos) { // convert motor position to angle, in radians
         double[] radRange = _motorRanges_rad.get(servoID);
         Byte index = IDtoIndex.get(servoID);
         double percent = 1; // avoid div by 0. no range, use 100%.
@@ -161,14 +174,14 @@ public class ServoRangeTool implements Serializable {
 
     ///==================== LOAD AND SAVE
     ///====================
-    public static ServoRangeTool Load(){ return ServoRangeTool.Load(DEFAULT_FILENAME);}
-    public static ServoRangeTool Load(String filename){
-        ServoRangeTool s = null;
+    public static ServoMappingTools Load(){ return ServoMappingTools.Load(DEFAULT_FILENAME);}
+    public static ServoMappingTools Load(String filename){
+        ServoMappingTools s = null;
         try(
             FileInputStream fout = new FileInputStream(filename);
             ObjectInputStream ois = new ObjectInputStream(fout);
         ){
-            s = (ServoRangeTool) ois.readObject();
+            s = (ServoMappingTools) ois.readObject();
             ois.close();
         } catch (Exception ex) {
             ex.printStackTrace();

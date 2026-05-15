@@ -3,7 +3,7 @@ package sota.supportPrograms;
 import jp.vstone.RobotLib.*;
 import sota.kinematics.ServoMappingTools;
 
-public class MotorRangeTest {
+public class ServoRangeTest {
 	static final String TAG = "MotorRangeTest";   // set this to support the Sota logging system
 
 	// private variables
@@ -13,7 +13,7 @@ public class MotorRangeTest {
 
 	final int MOVESPEED = 1500;
 
-	MotorRangeTest() {
+	ServoRangeTest() {
 		CRobotUtil.Log(TAG, "Start " + TAG);
 	}
 
@@ -71,7 +71,7 @@ public class MotorRangeTest {
 	}
 
 	public static void main(String args[]){
-		MotorRangeTest sota = new MotorRangeTest();
+		ServoRangeTest sota = new ServoRangeTest();
 		if (!sota.connect())
 			return;
 		CRobotUtil.Log(TAG, "Startup Successful");

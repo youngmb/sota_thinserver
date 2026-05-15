@@ -6,7 +6,7 @@ import jp.vstone.RobotLib.*;
 import sota.kinematics.MatrixHelp;
 import sota.kinematics.ServoMappingTools;
 
-public class MotorAngleReader {
+public class ServoAngleReader {
 	static final String TAG = "MotorAngleReader";   // set this to support the Sota logging system
 
 	// private variables
@@ -14,7 +14,7 @@ public class MotorAngleReader {
 	CRobotMem _sotaMem = new CRobotMem();
 	CSotaMotion _sotaMotion = new CSotaMotion(_sotaMem);
 
-	MotorAngleReader() {
+	ServoAngleReader() {
 		CRobotUtil.Log(TAG, "Start " + TAG);
 	}
 
@@ -49,7 +49,7 @@ public class MotorAngleReader {
 
 			System.out.println("---"+ Arrays.toString(rawAngles));
 
-			RealVector angles = ranges.calcAngles(pose);
+			RealVector angles = ranges.calcAngles_vector(pose);
 			MatrixHelp.printVector(angles);
 
 			pose = ranges.calcMotorValues_vector(angles);
@@ -61,7 +61,7 @@ public class MotorAngleReader {
 	}
 
 	public static void main(String args[]){
-		MotorAngleReader sota = new MotorAngleReader();
+		ServoAngleReader sota = new ServoAngleReader();
 		if (!sota.connect())
 			return;
 		CRobotUtil.Log(TAG, "Startup Successful");

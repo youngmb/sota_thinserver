@@ -10,9 +10,9 @@ import io.javalin.http.Context;
 import main.Properties;
 import main.PropertyKey;
 import main.SotaSystemController;
-import sota.motors.MotorService;
-import sota.motors.MotorSystemStatus;
-import sota.motors.SingleMotorStatus;
+import sota.servos.ServoService;
+import sota.servos.ServoSystemStatus;
+import sota.servos.ServosStatus;
 
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -86,30 +86,30 @@ public class HTTPServer {
         );
     }
 
-    public void enableMotorEndpoints(MotorService motorService) {
+    public void enableMotorEndpoints(ServoService motorService) {
 
         // general motor information
         createStatusEndpoint(
-                "/motors/info",
+                "/servos/info",
                 motorService::getSystemStatus,
                 motorService::postSystemStatus,
-                MotorSystemStatus.class
+                ServoSystemStatus.class
         );
 
         // joint-space radians
         createStatusEndpoint(
-                "/motors/jointspace",
+                "/servos/jointspace",
                 motorService::getJointSpaceStatus,
                 motorService::postJointSpaceStatus,
-                SingleMotorStatus.class
+                ServosStatus.class
         );
 
         // world-space cartesian coordinates
         createStatusEndpoint(
-                "/motors/worldspace",
+                "/servos/worldspace_skeleton",
                 motorService::getWorldSpaceStatus,
                 motorService::postWorldSpaceStatus,
-                SingleMotorStatus.class
+                ServosStatus.class
         );
     }
 }

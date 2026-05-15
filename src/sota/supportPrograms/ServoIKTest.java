@@ -12,7 +12,7 @@ import sota.kinematics.Frames.FrameKeys;
 import sota.kinematics.SotaInverseK;
 import sota.kinematics.SotaInverseK.JType;
 
-public class MotorIKTest {
+public class ServoIKTest {
 	static final String TAG = "MotorIKTest";   // set this to support the Sota logging system
 
 	final boolean DEBUG_PRINT = false; // turn on to get debug output
@@ -22,7 +22,7 @@ public class MotorIKTest {
 	CRobotMem _sotaMem = new CRobotMem();
 	CSotaMotion _sotaMotion = new CSotaMotion(_sotaMem);
 
-	MotorIKTest() {
+	ServoIKTest() {
 		CRobotUtil.Log(TAG, "Start " + TAG);
 	}
 
@@ -113,7 +113,7 @@ public class MotorIKTest {
 	}
 
 	public static void main(String args[]){
-		MotorIKTest sota = new MotorIKTest();
+		ServoIKTest sota = new ServoIKTest();
 		if (!sota.connect())
 			return;
 		CRobotUtil.Log(TAG, "Startup Successful");

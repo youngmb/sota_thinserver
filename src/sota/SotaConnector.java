@@ -5,9 +5,6 @@ import jp.vstone.RobotLib.CRobotUtil;
 import jp.vstone.RobotLib.CSotaMotion;
 import sota.kinematics.*;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class SotaConnector  {
 
     private final String TAG = "Sota Thinserver Connector";
@@ -16,15 +13,33 @@ public class SotaConnector  {
     CSotaMotion sotaMotion = new CSotaMotion(sotaMem);
     boolean motorsEnabled = false;
 
-    public ServoRangeTool ranges = null;
+    public ServoMappingTools servoMapper = null;
 
     public SotaConnector() {
     ; // pass
     }
 
-    public void enableMotors() { sotaMotion.ServoOn(); motorsEnabled = true;}
+    public void enableMotors() { sotaMotion.play(sotaMotion.getReadPose(),0); sotaMotion.ServoOn(); motorsEnabled = true;}
     public void disableMotors() { sotaMotion.ServoOff(); motorsEnabled = false;}
     public boolean isMotorsEnabled() { return motorsEnabled; }
+
+//    public Short[] getMotorValues() {
+//        CRobotPose pose = sotaMotion.getReadPose();
+//        return pose.getServoAngles(sotaMotion.getDefaultIDs());
+//    }
+
+    public void setSparseMotorValuesInRadians(Double[] target_angles, int msec) { // only update for non-null entries
+        double[] angles = servoMapper.calcAngles_array(sotaMotion.getReadPose());
+
+        for (int i = 0; i < target_angles.length; i++) {  // only change motors for which new values arrived
+            if (target_angles[i] == null) continue;
+            angles[i] = target_angles[i];
+        }
+        sotaMotion.play(servoMapper.makePose_fromRadians(angles), msec);
+    }
+
+    public double[] getMotorValuesAsRadians() {return servoMapper.calcAngles_array(sotaMotion.getReadPose());}
+
 
     public boolean start() {
         if(!sotaMem.Connect()) { // connect to the robot's subsystem
@@ -32,13 +47,12 @@ public class SotaConnector  {
             return false;
         }
 
-
         CRobotUtil.Log(TAG, "connected " + TAG);
         sotaMotion.InitRobot_Sota();  // initialize the Sota VSMD
         CRobotUtil.Log(TAG, "Rev. " + sotaMem.FirmwareRev.get());
 
-        ranges = ServoRangeTool.Load();
-        if (ranges == null) {
+        servoMapper = ServoMappingTools.Load();
+        if (servoMapper == null) {
             CRobotUtil.Log(TAG, "Failed to load servo ranges");
             return false;
         }

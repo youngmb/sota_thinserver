@@ -3,7 +3,7 @@ package sota.supportPrograms;
 import jp.vstone.RobotLib.*;
 import sota.kinematics.ServoMappingTools;
 
-public class MotorRangeCalibrator {
+public class ServoRangeCalibrator {
 	static final String TAG = "MotorRangeCalibrator";   // set this to support the Sota logging system
 
 	// private variables
@@ -11,7 +11,7 @@ public class MotorRangeCalibrator {
 	CRobotMem _sotaMem = new CRobotMem();
 	CSotaMotion _sotaMotion = new CSotaMotion(_sotaMem);
 
-	MotorRangeCalibrator() {
+	ServoRangeCalibrator() {
 		CRobotUtil.Log(TAG, "Start " + TAG);
 	}
 
@@ -48,7 +48,7 @@ public class MotorRangeCalibrator {
 	}
 
 	public static void main(String args[]){
-		MotorRangeCalibrator sota = new MotorRangeCalibrator();
+		ServoRangeCalibrator sota = new ServoRangeCalibrator();
 		if (!sota.connect())
 			return;
 		CRobotUtil.Log(TAG, "Startup Successful");

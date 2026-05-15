@@ -1,4 +1,4 @@
-package sota.motors;
+package sota.servos;
 
 import java.util.ArrayList;
 import java.util.List;

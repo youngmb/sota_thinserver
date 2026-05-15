@@ -1,4 +1,4 @@
-package sota.motors;
+package sota.servos;
 
 import httpserver.ActionResult;
 import sota.SotaConnector;

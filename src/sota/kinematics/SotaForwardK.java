@@ -19,16 +19,16 @@ public class SotaForwardK {
     public SotaForwardK(RealVector angles) {
         //======== setup Transformation matrices
         RealMatrix _base_to_origin          = MatrixUtils.createRealIdentityMatrix(4);
-        RealMatrix _body_to_base 			= MatrixHelp.T(MatrixHelp.rotZ(angles.getEntry(ServoRangeTool.IDtoIndex.get(CSotaMotion.SV_BODY_Y))), 		0, 0, 0.005);
-        RealMatrix _neck_to_body 			= MatrixHelp.T(MatrixHelp.rotZ(angles.getEntry(ServoRangeTool.IDtoIndex.get(CSotaMotion.SV_HEAD_Y))), 		0, 0, .19);
-        RealMatrix _headroll_to_neck 		= MatrixHelp.T(MatrixHelp.rotY(angles.getEntry(ServoRangeTool.IDtoIndex.get(CSotaMotion.SV_HEAD_R))), 		0, 0, 0);
-        RealMatrix _headpitch_to_headroll 	= MatrixHelp.T(MatrixHelp.rotX(angles.getEntry(ServoRangeTool.IDtoIndex.get(CSotaMotion.SV_HEAD_P))), 		0, 0, 0);
+        RealMatrix _body_to_base 			= MatrixHelp.T(MatrixHelp.rotZ(angles.getEntry(ServoMappingTools.IDtoIndex.get(CSotaMotion.SV_BODY_Y))), 		0, 0, 0.005);
+        RealMatrix _neck_to_body 			= MatrixHelp.T(MatrixHelp.rotZ(angles.getEntry(ServoMappingTools.IDtoIndex.get(CSotaMotion.SV_HEAD_Y))), 		0, 0, .19);
+        RealMatrix _headroll_to_neck 		= MatrixHelp.T(MatrixHelp.rotY(angles.getEntry(ServoMappingTools.IDtoIndex.get(CSotaMotion.SV_HEAD_R))), 		0, 0, 0);
+        RealMatrix _headpitch_to_headroll 	= MatrixHelp.T(MatrixHelp.rotX(angles.getEntry(ServoMappingTools.IDtoIndex.get(CSotaMotion.SV_HEAD_P))), 		0, 0, 0);
         RealMatrix _head_to_headpitch 		= MatrixUtils.createRealIdentityMatrix(4); 		// head_to_headpitch - no change since the headpitch is the actual head.
-        RealMatrix _r_shoulder_to_body 		= MatrixHelp.T(MatrixHelp.rotX(angles.getEntry(ServoRangeTool.IDtoIndex.get(CSotaMotion.SV_R_SHOULDER))),	 -.039, 0, .1415);
-        RealMatrix _l_shoulder_to_body 		= MatrixHelp.T(MatrixHelp.rotX(angles.getEntry(ServoRangeTool.IDtoIndex.get(CSotaMotion.SV_L_SHOULDER))), 	.039, 0, .1415);
-        RealMatrix _r_elbow_to_shoulder 	= MatrixHelp.T(MatrixHelp.rotRodrigues(-0.6258053, .329192519, 0.707106769,  angles.getEntry(ServoRangeTool.IDtoIndex.get(CSotaMotion.SV_R_ELBOW))),
+        RealMatrix _r_shoulder_to_body 		= MatrixHelp.T(MatrixHelp.rotX(angles.getEntry(ServoMappingTools.IDtoIndex.get(CSotaMotion.SV_R_SHOULDER))),	 -.039, 0, .1415);
+        RealMatrix _l_shoulder_to_body 		= MatrixHelp.T(MatrixHelp.rotX(angles.getEntry(ServoMappingTools.IDtoIndex.get(CSotaMotion.SV_L_SHOULDER))), 	.039, 0, .1415);
+        RealMatrix _r_elbow_to_shoulder 	= MatrixHelp.T(MatrixHelp.rotRodrigues(-0.6258053, .329192519, 0.707106769,  angles.getEntry(ServoMappingTools.IDtoIndex.get(CSotaMotion.SV_R_ELBOW))),
                                              -.0225, -.03897, 0);
-        RealMatrix _l_elbow_to_shoulder		= MatrixHelp.T(MatrixHelp.rotRodrigues(0.6258053, .329192519, 0.707106769, angles.getEntry(ServoRangeTool.IDtoIndex.get(CSotaMotion.SV_L_ELBOW))), 
+        RealMatrix _l_elbow_to_shoulder		= MatrixHelp.T(MatrixHelp.rotRodrigues(0.6258053, .329192519, 0.707106769, angles.getEntry(ServoMappingTools.IDtoIndex.get(CSotaMotion.SV_L_ELBOW))),
                                             .0225, -.03897, 0);
         RealMatrix _r_hand_to_elbow 		= MatrixHelp.trans(R_SHOULDER_DIR.mapMultiply(ARMLENGTH));
         RealMatrix _l_hand_to_elbow			= MatrixHelp.trans(L_SHOULDER_DIR.mapMultiply(ARMLENGTH));
@@ -44,9 +44,6 @@ public class SotaForwardK {
         RealMatrix _l_elbow_to_origin       = _l_shoulder_to_origin.multiply(_l_elbow_to_shoulder);
         RealMatrix _l_hand_to_origin        = _l_elbow_to_origin.multiply(_l_hand_to_elbow);
 
-        // frames.put(FrameKeys.BASE, _base_to_origin);
-        // frames.put(FrameKeys.BODY, _body_to_origin);
-        // frames.put(FrameKeys.NECK, _neck_to_origin);
         frames.put(FrameKeys.HEAD, _head_to_origin);
         frames.put(FrameKeys.R_HAND, _r_hand_to_origin);
         frames.put(FrameKeys.L_HAND, _l_hand_to_origin);

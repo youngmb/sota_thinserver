@@ -6,7 +6,7 @@ import sota.kinematics.ServoMappingTools;
 import sota.kinematics.SotaForwardK;
 import sota.kinematics.Frames.FrameKeys;
 
-public class MotorFKTest {
+public class ServoFKTest {
 	static final String TAG = "MotorFKTest";   // set this to support the Sota logging system
 
 	// private variables
@@ -14,7 +14,7 @@ public class MotorFKTest {
 	CRobotMem _sotaMem = new CRobotMem();
 	CSotaMotion _sotaMotion = new CSotaMotion(_sotaMem);
 
-	MotorFKTest() {
+	ServoFKTest() {
 		CRobotUtil.Log(TAG, "Start " + TAG);
 	}
 
@@ -45,7 +45,7 @@ public class MotorFKTest {
 		while (!_sotaMotion.isButton_Power()) {
 			System.out.print("\033[H");  // move to origin
 			// SotaForwardK sotaforwardK = new SotaForwardK(ranges.calcAngles(_sotaMotion.getReadPose()));
-			SotaForwardK FK = new SotaForwardK(ranges.calcAngles(_sotaMotion.getReadPose()));
+			SotaForwardK FK = new SotaForwardK(ranges.calcAngles_vector(_sotaMotion.getReadPose()));
 
 			ranges.printMotorRanges(_sotaMotion.getReadpos());
 			// MatrixHelp.printFrame("body", FK.frames.get(Frames.BODY));
@@ -64,7 +64,7 @@ public class MotorFKTest {
 	}
 
 	public static void main(String args[]){
-		MotorFKTest sota = new MotorFKTest();
+		ServoFKTest sota = new ServoFKTest();
 		if (!sota.connect())
 			return;
 		CRobotUtil.Log(TAG, "Startup Successful");
