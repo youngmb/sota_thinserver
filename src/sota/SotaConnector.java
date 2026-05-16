@@ -86,7 +86,7 @@ public class SotaConnector implements Runnable {
         this.sotaThreadKey = sotaMotion.getThreadkey();  // steal Sota's thread key in the same thread we started the subsystem
 
         running = true;
-        workerThread = new Thread(this, "queue draining worker thread");
+        workerThread = new Thread(this, "Sota Connector action queue draining worker thread");
         workerThread.start();
 
         return true;
@@ -112,11 +112,13 @@ public class SotaConnector implements Runnable {
         while(running) {
             try {
                 ActionQueueEntry action = sotaActionQueue.take();
+                sotaMotion.play(action.pose, action.msec, this.sotaThreadKey);
+                /*TODO : manage waiting for action to finish. consider between doing a waituntildone, investigating
+                  if its interruptable, or, our own timers. Our own timers are intteruptable and also may do better
+                  to interleave action commands that are asked to do in parallel. Currently the action command only specifies
+                  where in the queue it goes, but we don't specify if its blocking or parallel. something to think on.
 
-                if (action != null){
-                    sotaMotion.play(action.pose, action.msec, this.sotaThreadKey);
-                }
-
+                 */
             } catch (InterruptedException e) {
                 // interrupted for some reason, try again by looping around.
             }
