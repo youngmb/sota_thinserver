@@ -1,0 +1,20 @@
+#  These can be pasted into the command line to test different things.
+
+
+curl -X POST http://localhost:8080/pose/system -H "Content-Type: application/json" -d '{"servosEnabled":"true"}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"HEAD_Y","radians": -1}],"move_msec":1000,"LEDStatus":[{"led_id":"leftEye","color":"#FF0000"}]}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"HEAD_Y","radians": 1}],"move_msec":1000,"LEDStatus":[{"led_id":"leftEye","color":"#FFFFFF"}]}'
+
+
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"HEAD_Y","radians":1}],"LEDStatus":[{"led_id":"leftEye","color":"#00aaaa"}]}'
+
+
+curl http://localhost:8080/pose/jointspace
+
+
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"LEDStatus":[{"led_id":"power","color":"#00FF00"},{"led_id":"leftEye","color":"#00aa00"},{"led_id":"rightEye","color":"#FFFFFF"},{"led_id":"mouth","color":"#ff"}]}'
+
+
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"LEDStatus":[{"led_id":"power","color":"#00FF00"},{"led_id":"mouth","color":"#ff"}]}'
+
+
