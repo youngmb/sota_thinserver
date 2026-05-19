@@ -5,16 +5,19 @@ import audioStreaming.SpeakerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import audioStreaming.AudioStatus;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import io.javalin.plugin.json.JavalinJackson;
 import main.Properties;
 import main.PropertyKey;
 import main.SotaSystemController;
-import sota.servos.ServoService;
-import sota.servos.ServoSystemStatus;
-import sota.servos.ServosCommand;
-import sota.servos.ServosStatus;
+import sota.pose.PoseService;
+import sota.pose.PoseSystemStatus;
+import sota.pose.PoseCommand;
+import sota.pose.PoseStatus;
 
+import java.awt.*;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
@@ -25,20 +28,26 @@ public class HTTPServer {
 
     public HTTPServer(SotaSystemController controller) {
         int httpPort = Properties.getPropAsInt(PropertyKey.KEY_NET_HTTP_PORT);
+
+        ObjectMapper mapper = JavalinJackson.getObjectMapper();
+
+        // register our JSON color serializer
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(Color.class, new ColorSerializer.Serializer());
+        module.addDeserializer(Color.class, new ColorSerializer.Deserializer());
+        mapper.registerModule(module);
+
+        JavalinJackson.configure(mapper);
+
         app = Javalin.create(config -> {
             config.defaultContentType = "application/json";
         }).start(httpPort);
-
-        ObjectMapper mapper = new ObjectMapper();  // manual JSON parsing for better error handling
-        mapper.findAndRegisterModules();
     }
 
-    public void stop() {
-        if (app != null)
-            app.stop();
-    }
+    public void stop() {        if (app != null)  app.stop();     }
 
-    private void setCtxError(Context ctx, String error) {
+
+    private void setCtxError(Context ctx, String error) {   // generate an error response instead of stack trace
         ctx.status(400); // malformed request
         ctx.json(java.util.Collections.singletonMap( "Error", error ));
     }
@@ -92,30 +101,30 @@ public class HTTPServer {
         );
     }
 
-    public void enableMotorEndpoints(ServoService motorService) {
+    public void enablePoseEndpoints(PoseService PoseService) {
 
         // general motor information
         createStatusEndpoint(
-                "/servos/info",
-                motorService::getSystemStatus,
-                motorService::postSystemStatus,
-                ServoSystemStatus.class
+                "/pose/system",
+                PoseService::getSystemStatus,
+                PoseService::postSystemStatus,
+                PoseSystemStatus.class
         );
 
         // joint-space radians
         createStatusEndpoint(
-                "/servos/jointspace",
-                motorService::getJointSpaceStatus,
-                motorService::postJointSpaceStatus,
-                ServosCommand.class
+                "/pose/jointspace",
+                PoseService::getJointSpaceStatus,
+                PoseService::postJointSpaceStatus,
+                PoseCommand.class
         );
 
         // world-space cartesian coordinates
         createStatusEndpoint(
-                "/servos/worldspace_skeleton",
-                motorService::getWorldSpaceStatus,
-                motorService::postWorldSpaceStatus,
-                ServosStatus.class
+                "/pose/worldspace_skeleton",
+                PoseService::getWorldSpaceStatus,
+                PoseService::postWorldSpaceStatus,
+                PoseStatus.class
         );
     }
 }

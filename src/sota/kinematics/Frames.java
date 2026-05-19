@@ -1,7 +1,7 @@
 package sota.kinematics;
 
 import jp.vstone.RobotLib.CSotaMotion;
-import static sota.kinematics.ServoMappingTools.IDtoIndex;
+import static sota.kinematics.SotaMappingTools.IDtoIndex;
 
 public class Frames {
     public enum FrameKeys{

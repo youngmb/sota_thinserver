@@ -4,7 +4,7 @@ import java.util.Arrays;
 import org.apache.commons.math3.linear.RealVector;
 import jp.vstone.RobotLib.*;
 import sota.kinematics.MatrixHelp;
-import sota.kinematics.ServoMappingTools;
+import sota.kinematics.SotaMappingTools;
 
 public class ServoAngleReader {
 	static final String TAG = "MotorAngleReader";   // set this to support the Sota logging system
@@ -31,7 +31,7 @@ public class ServoAngleReader {
 	}
 
 	void run() {
-		ServoMappingTools ranges = ServoMappingTools.Load();
+		SotaMappingTools ranges = SotaMappingTools.Load();
 		CRobotUtil.Log(TAG, "Servo Ranges Loaded");
 		ranges.printMotorRanges(_sotaMotion.getReadpos());
 

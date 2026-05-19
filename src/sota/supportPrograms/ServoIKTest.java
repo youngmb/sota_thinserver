@@ -6,7 +6,7 @@ import org.apache.commons.math3.linear.RealVector;
 
 import jp.vstone.RobotLib.*;
 import sota.kinematics.MatrixHelp;
-import sota.kinematics.ServoMappingTools;
+import sota.kinematics.SotaMappingTools;
 import sota.kinematics.SotaForwardK;
 import sota.kinematics.Frames.FrameKeys;
 import sota.kinematics.SotaInverseK;
@@ -49,7 +49,7 @@ public class ServoIKTest {
 		RADIUS = .035; // mm
 		ROTATION_SPEED = 0.5; // radians each time.
 
-		ServoMappingTools ranges = ServoMappingTools.Load();
+		SotaMappingTools ranges = SotaMappingTools.Load();
 		CRobotUtil.Log(TAG, "Servo Ranges Loaded");
 
 		_sotaMotion.ServoOn();

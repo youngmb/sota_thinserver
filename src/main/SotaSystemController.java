@@ -4,7 +4,7 @@ import audioStreaming.MicService;
 import audioStreaming.SpeakerService;
 import httpserver.HTTPServer;
 import sota.SotaConnector;
-import sota.servos.ServoService;
+import sota.pose.PoseService;
 
 public class SotaSystemController {
     private HTTPServer httpServer = null;
@@ -13,7 +13,7 @@ public class SotaSystemController {
 
     private final MicService micService = new MicService();
     private final SpeakerService speakerService = new SpeakerService();
-    private final ServoService motorService = new ServoService(sota);
+    private final PoseService motorService = new PoseService(sota);
 
     public SotaSystemController() {
         ; // pass
@@ -26,7 +26,7 @@ public class SotaSystemController {
         httpServer = new HTTPServer(this);
         httpServer.enableMicEndpoints(micService);
         httpServer.enableSpeakerEndpoints(speakerService);
-        httpServer.enableMotorEndpoints(motorService);
+        httpServer.enablePoseEndpoints(motorService);
     }
 
     public void stop() {

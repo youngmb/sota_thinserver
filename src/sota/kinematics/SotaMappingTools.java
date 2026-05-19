@@ -1,5 +1,6 @@
 package sota.kinematics;
 
+import java.awt.*;
 import java.io.*;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -9,13 +10,18 @@ import java.util.Map;
 import jp.vstone.RobotLib.CRobotPose;
 import jp.vstone.RobotLib.CSotaMotion;
 
-public class ServoMappingTools implements Serializable {
+public class SotaMappingTools implements Serializable {
     private static final long serialVersionUID = 1L;
 
     final public static String FALLBACK_DEFAULT_FILENAME = "../resources/motorranges-default.dat";
     final public static String LOCAL_FILENAME = "./motorranges.dat";
 
     final public static int SERVO_COUNT = 8;
+    final public static int LED_ENTRY_COUNT = 10; // RGB lights each count as 3
+
+    public static TreeMap<Byte, Byte> IDtoIndex = null;
+
+    private Byte[] _servoIDs = null;   // Store the IDs of sota motors. Receive from sota subsystem
 
     // map to support type-safe String-> motor ID
     public static final Map<String, Byte> motorIdByName = new HashMap<>();
@@ -30,17 +36,7 @@ public class ServoMappingTools implements Serializable {
         motorIdByName.put("HEAD_R", CSotaMotion.SV_HEAD_R);
     }
 
-    public static TreeMap<Byte, Byte> IDtoIndex = null;
-
-    private Short[] _minpos = null;  // internal arrays for precalcualted values
-    private Short[] _maxpos = null;
-    private Short[] _midpos = null;
-
-    // caching of creating pose objects, to accelerate multiple accesses
-    boolean _initialized = false;
-    private Byte[] _servoIDs = null;
-
-    public ServoMappingTools(Byte[] servoIDs) {
+    public SotaMappingTools(Byte[] servoIDs) {
         this._servoIDs = servoIDs;
         setupMotorRanges();
     }
@@ -65,22 +61,100 @@ public class ServoMappingTools implements Serializable {
         }};
     }
 
-    public void register(Short[] pos) {
-        if (!_initialized) {
-            _minpos = (Short[])pos.clone();
-            _maxpos = (Short[])pos.clone();
-            _midpos = (Short[])pos.clone();
-            _initialized = true;
-        } else
-        for (int i=0; i < pos.length; i++) {
-            _minpos[i] = (short)Math.min(_minpos[i], pos[i]);
-			_maxpos[i] = (short)Math.max(_maxpos[i], pos[i]);
-			_midpos[i] = (short) ( (_minpos[i] + _maxpos[i])/2 );
+    ///==================== LED Mapping support functions
+    ///====================
+    public enum LEDs { // start index of light. note that RGB has 3 entries
+        POWER("power", 0, 3), // RGB
+        ///  I wonder what 3-7 are mapped to
+        EYE_L("leftEye", 8, 3), // RGB
+        EYE_R("rightEye", 11, 3),
+        MOUTH("mouth", 14, 1);
+
+        public final byte index;
+        public final int count;
+        public final String label;
+        LEDs(String label, int index, int count) {
+            this.index = (byte)index; this.count = count; this.label = label;
+        }
+
+        static public LEDs fromLabel(String label) {
+            for (LEDs led: LEDs.values()) {
+                if (label.equals(led.label))
+                    return led;
+            }
+            return null;
         }
     }
 
-    ///==================== Export as CRobotPose objects
+    public static Color getLEDColor(Map<Byte, Short> LEDData, LEDs led) {
+        if (led.count == 1) { // monochrome
+            Short c = LEDData.get(led.index);
+            return new Color(c, c, c);
+
+        } else if (led.count == 3) {
+            Short r = LEDData.get(led.index);
+            Short g = LEDData.get((byte)(led.index+1));
+            Short b = LEDData.get((byte)(led.index+1));
+            return new Color(r, g, b);
+        }
+
+        // should never happen
+        return null;
+    }
+
+    public static void setLED(Map<Byte, Short> LEDMap, String LED, Color color){ setLED(LEDMap, LEDs.fromLabel(LED), color); }
+
+    public static void setLED(Map<Byte, Short> LEDMap, LEDs LED, Color color){
+        if (LEDMap == null || LED == null || color == null) {
+            System.err.println("ERROR: setting LED with null");
+            return;
+        }
+
+        boolean flipGreen = LED == LEDs.POWER; // special case for power button
+
+        float[] rgb = color.getRGBColorComponents(null);
+        for (int i = 0; i < LED.count; i++) {
+            short c = (short) (rgb[i] * 255);
+            if (flipGreen && i==1) // GREEN
+                c = (short)(255-c);
+            LEDMap.put((byte) (LED.index + i), c);
+        }
+    }
+
+    ///==================== Manage min/max/etc.
     ///====================
+    private Short[] _minpos = null;  // internal arrays for precalcualted values
+    private Short[] _maxpos = null;
+    private Short[] _midpos = null;
+    boolean _calibrationInitialized = false;
+
+    public CRobotPose getMinPose() { return makePose_fromPositions(_minpos);}
+    public CRobotPose getMaxPose() { return makePose_fromPositions(_maxpos);}
+    public CRobotPose getMidPose() { return makePose_fromPositions(_midpos);}
+
+    public double getMinRad(String servoID) { return getMinRad(motorIdByName.get(servoID));}
+    public double getMinRad(Byte servoID) {return _motorRanges_rad.get(servoID)[0];}
+
+    public double getMaxRad(String servoID) { return getMaxRad(motorIdByName.get(servoID));}
+    public double getMaxRad(Byte servoID) {return _motorRanges_rad.get(servoID)[1];}
+
+    public void registerCalibrationEntry(Short[] pos) {
+        if (!_calibrationInitialized) {
+            _minpos = (Short[])pos.clone();
+            _maxpos = (Short[])pos.clone();
+            _midpos = (Short[])pos.clone();
+            _calibrationInitialized = true;
+        } else
+            for (int i=0; i < pos.length; i++) {
+                _minpos[i] = (short)Math.min(_minpos[i], pos[i]);
+                _maxpos[i] = (short)Math.max(_maxpos[i], pos[i]);
+                _midpos[i] = (short) ( (_minpos[i] + _maxpos[i])/2 );
+            }
+    }
+
+    ///==================== Angle <-> motor pos conversions
+    ///====================  mostly utility functions to support working in different units
+    ///
     private CRobotPose makePose_fromPositions(Short[] pos) {
         CRobotPose pose = new CRobotPose();
         pose.SetPose(_servoIDs, pos);
@@ -97,18 +171,6 @@ public class ServoMappingTools implements Serializable {
         return pose;
     }
 
-    public CRobotPose getMinPose() { return makePose_fromPositions(_minpos);}
-    public CRobotPose getMaxPose() { return makePose_fromPositions(_maxpos);}
-    public CRobotPose getMidPose() { return makePose_fromPositions(_midpos);}
-
-    public double getMinRad(String servoID) { return getMinRad(motorIdByName.get(servoID));}
-    public double getMinRad(Byte servoID) {return _motorRanges_rad.get(servoID)[0];}
-
-    public double getMaxRad(String servoID) { return getMaxRad(motorIdByName.get(servoID));}
-    public double getMaxRad(Byte servoID) {return _motorRanges_rad.get(servoID)[1];}
-
-    ///==================== Angle <-> motor pos conversions
-    ///====================
     public RealVector calcAngles_vector(CRobotPose pose) { return MatrixUtils.createRealVector(calcAngles_array(pose));}
     public double[] calcAngles_array(CRobotPose pose) { // convert pose in motor positions to radians
         Short[] rawAngles = pose.getServoAngles(_servoIDs);
@@ -185,16 +247,16 @@ public class ServoMappingTools implements Serializable {
         return null;
     }
 
-    public static ServoMappingTools Load(){ return ServoMappingTools.Load(findFile());}
-    public static ServoMappingTools Load(String filename){
+    public static SotaMappingTools Load(){ return SotaMappingTools.Load(findFile());}
+    public static SotaMappingTools Load(String filename){
         if (filename == null) return null;
 
-        ServoMappingTools s = null;
+        SotaMappingTools s = null;
         try(
             FileInputStream fout = new FileInputStream(filename);
             ObjectInputStream ois = new ObjectInputStream(fout);
         ){
-            s = (ServoMappingTools) ois.readObject();
+            s = (SotaMappingTools) ois.readObject();
             ois.close();
             System.out.println("Loaded Servo Motor Ranges from "+filename);
         } catch (Exception ex) {

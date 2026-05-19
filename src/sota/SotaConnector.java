@@ -6,6 +6,7 @@ import jp.vstone.RobotLib.CRobotUtil;
 import jp.vstone.RobotLib.CSotaMotion;
 import sota.kinematics.*;
 
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -21,7 +22,7 @@ public class SotaConnector implements Runnable {
     private Thread workerThread = null;
     private volatile boolean running = false;
 
-    public ServoMappingTools servoMapper = null;
+    public SotaMappingTools servoMapper = null;
 
     private final BlockingQueue<ActionQueueEntry> sotaActionQueue = new ArrayBlockingQueue<>(1000); // TODO: NAME AND THINK ABOUT QUEUE SIZE
 
@@ -29,10 +30,7 @@ public class SotaConnector implements Runnable {
         CRobotPose pose;
         int msec;
 
-        ActionQueueEntry(CRobotPose pose, int msec) {
-            this.pose = pose;
-            this.msec = msec;
-        }
+        ActionQueueEntry(CRobotPose pose, int msec) {  this.pose = pose;  this.msec = msec; }
     }
 
     public SotaConnector() {
@@ -40,8 +38,7 @@ public class SotaConnector implements Runnable {
     }
 
     public void enableMotors() {
-        // ServoOn does not work across threads so we need to manually tell the Sota to start at the current pos.
-        sotaMotion.play(sotaMotion.getReadPose(), 100, this.sotaThreadKey);
+        sotaMotion.play(sotaMotion.getReadPose(), 100, this.sotaThreadKey);  // make sure the target loc is current when enabling
         sotaMotion.ServoOn();
         motorsEnabled = true;
     }
@@ -55,16 +52,16 @@ public class SotaConnector implements Runnable {
         return motorsEnabled;
     }
 
-    public void addPoseToActionQueue(CRobotPose pose, int msec) { // only update for non-null entries
+    public void addPoseToActionQueue(CRobotPose pose, int msec) {
         sotaActionQueue.add(new ActionQueueEntry(pose, msec));
-//        sotaMotion.play(pose, msec, this.sotaThreadKey);
-//        sotaMotion.waitEndinterpAll();
     }
 
     public double[] getMotorValuesAsRadians() {
         return servoMapper.calcAngles_array(sotaMotion.getReadPose());
     }
 
+    public CRobotPose getTargetPose() { return sotaMotion.getTargetPose();}
+    public CRobotPose getCurrentPose() { return sotaMotion.getReadPose();} // does not include color :(
 
     public boolean start() {
         if (!sotaMem.Connect()) { // connect to the robot's subsystem
@@ -76,7 +73,7 @@ public class SotaConnector implements Runnable {
         sotaMotion.InitRobot_Sota();  // initialize the Sota VSMD
         CRobotUtil.Log(TAG, "Rev. " + sotaMem.FirmwareRev.get());
 
-        servoMapper = ServoMappingTools.Load();
+        servoMapper = SotaMappingTools.Load();
         if (servoMapper == null) {
             CRobotUtil.Log(TAG, "Failed to load servo ranges");
             return false;
@@ -113,6 +110,7 @@ public class SotaConnector implements Runnable {
             try {
                 ActionQueueEntry action = sotaActionQueue.take();
                 sotaMotion.play(action.pose, action.msec, this.sotaThreadKey);
+                Thread.sleep(action.msec);
                 /*TODO : manage waiting for action to finish. consider between doing a waituntildone, investigating
                   if its interruptable, or, our own timers. Our own timers are intteruptable and also may do better
                   to interleave action commands that are asked to do in parallel. Currently the action command only specifies
