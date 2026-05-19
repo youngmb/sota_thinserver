@@ -13,7 +13,7 @@
         <property name="scp.edison.pass" value="edison00" />
 
         <!--target folders -->
-        <property name="sota.basedir" value="/home/root/thinclient" />
+        <property name="sota.basedir" value="/home/root/thinserver" />
 
         <!--dir structure -->
         <property name="src.dir" value="src"/>
