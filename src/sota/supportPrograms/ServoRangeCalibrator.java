@@ -44,7 +44,7 @@ public class ServoRangeCalibrator {
 			CRobotUtil.wait(100);
 		}
 		ranges.save();
-		CRobotUtil.Log(TAG, "Ranges saved in default file "+ ServoMappingTools.DEFAULT_FILENAME);
+		CRobotUtil.Log(TAG, "Ranges saved in file "+ ServoMappingTools.LOCAL_FILENAME);
 	}
 
 	public static void main(String args[]){
