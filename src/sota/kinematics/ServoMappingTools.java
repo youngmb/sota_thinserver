@@ -1,10 +1,6 @@
 package sota.kinematics;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.HashMap;
 import java.util.TreeMap;
 import org.apache.commons.math3.linear.MatrixUtils;
@@ -16,7 +12,8 @@ import jp.vstone.RobotLib.CSotaMotion;
 public class ServoMappingTools implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    final public static String DEFAULT_FILENAME = "motorranges.dat";
+    final public static String FALLBACK_DEFAULT_FILENAME = "../resources/motorranges-default.dat";
+    final public static String LOCAL_FILENAME = "./motorranges.dat";
 
     final public static int SERVO_COUNT = 8;
 
@@ -155,7 +152,7 @@ public class ServoMappingTools implements Serializable {
 		int i = IDtoIndex.get(servoID);
         double rad = 0;
         if (pos != null) rad = posToRad(servoID, pos[i]);
-		String format = "%14s %8d %8d %8d    %.2f rad";
+		String format = "%14s %8d %8d %8d    %.2f rad        ";
 		return String.format(format, title, minpos[i], middle[i], maxpos[i], rad);
 	}
 
@@ -174,8 +171,24 @@ public class ServoMappingTools implements Serializable {
 
     ///==================== LOAD AND SAVE
     ///====================
-    public static ServoMappingTools Load(){ return ServoMappingTools.Load(DEFAULT_FILENAME);}
+
+    private static String findFile() {
+        File f = new File(LOCAL_FILENAME);
+        if (f.exists() && !f.isDirectory())
+            return LOCAL_FILENAME;
+
+        f = new File(FALLBACK_DEFAULT_FILENAME);
+        if (f.exists() && !f.isDirectory())
+            return FALLBACK_DEFAULT_FILENAME;
+
+        System.err.println("Error: cannot find motor ranges mapping file, checked both: \n\t"+LOCAL_FILENAME+"\n\t"+FALLBACK_DEFAULT_FILENAME);
+        return null;
+    }
+
+    public static ServoMappingTools Load(){ return ServoMappingTools.Load(findFile());}
     public static ServoMappingTools Load(String filename){
+        if (filename == null) return null;
+
         ServoMappingTools s = null;
         try(
             FileInputStream fout = new FileInputStream(filename);
@@ -183,6 +196,7 @@ public class ServoMappingTools implements Serializable {
         ){
             s = (ServoMappingTools) ois.readObject();
             ois.close();
+            System.out.println("Loaded Servo Motor Ranges from "+filename);
         } catch (Exception ex) {
             ex.printStackTrace();
             return null;
@@ -191,8 +205,10 @@ public class ServoMappingTools implements Serializable {
         return s;
     }
 
-    public void save() { save(DEFAULT_FILENAME);}
+    public void save() { save(findFile());}
     public void save(String filename) {
+        if (filename==null) return;
+
         try(
             FileOutputStream fout = new FileOutputStream(filename);
             ObjectOutputStream oos = new ObjectOutputStream(fout);

@@ -7,7 +7,7 @@ import java.io.InputStream;
 
 public class Properties {
 
-    private static final String PROPERTIES_FILE = "../resources/config/sota.properties";
+    private static final String PROPERTIES_FILE = "../resources/config/sota.properties";    ///NOTE FRAGILE DEPENDENCY
     private static java.util.Properties sotaProperties = loadProperties();
 
     private static java.util.Properties loadProperties() {
