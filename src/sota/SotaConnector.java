@@ -141,8 +141,7 @@ public class SotaConnector implements Runnable {
                         while (handlingItem) // wait until its done, protected for spurious wakeups
                             condDoneHandlingItem.await(); // release lock and wait until signalled
 
-
-                        hasItem.signalAll();
+                        hasItem.signalAll();  // if it was blocked waiting, let it know that an item is available.
 
                     } catch (InterruptedException e) {
                         ; // why would this happen? shutdown?
