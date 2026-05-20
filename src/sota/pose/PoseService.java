@@ -86,7 +86,9 @@ public class PoseService {
         pose.SetPose(poseMap);
         pose.SetLed(LEDMap);
 
-        sota.addPoseToActionQueue(pose, command.move_msec);
+        if (command.command == null) command.command = PoseCommand.CommandType.DEFAULT_COMMAND;
+
+        sota.addPoseToActionQueue(pose, command.command, command.move_msec);
         return ActionResult.ok();
     }
 

@@ -66,8 +66,8 @@ public class SotaMappingTools implements Serializable {
     public enum LEDs { // start index of light. note that RGB has 3 entries
         POWER("power", 0, 3), // RGB
         ///  I wonder what 3-7 are mapped to
-        EYE_L("leftEye", 8, 3), // RGB
-        EYE_R("rightEye", 11, 3),
+        EYE_L("leftEye", 11, 3), // RGB
+        EYE_R("rightEye", 8, 3),
         MOUTH("mouth", 14, 1);
 
         public final byte index;

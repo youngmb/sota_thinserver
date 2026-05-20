@@ -12,6 +12,9 @@ public class PoseCommand {
     public enum CommandType {
         APPEND,
         PREPEND,
-        REPLACE
+        CLEAR_AND_ADD,
+        INTERRUPT_AND_PREPEND;
+
+        static public final CommandType DEFAULT_COMMAND = APPEND;
     }
 }

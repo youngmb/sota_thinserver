@@ -5,10 +5,13 @@ import jp.vstone.RobotLib.CRobotPose;
 import jp.vstone.RobotLib.CRobotUtil;
 import jp.vstone.RobotLib.CSotaMotion;
 import sota.kinematics.*;
+import sota.pose.PoseCommand;
 
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class SotaConnector implements Runnable {
 
@@ -24,7 +27,13 @@ public class SotaConnector implements Runnable {
 
     public SotaMappingTools servoMapper = null;
 
-    private final BlockingQueue<ActionQueueEntry> sotaActionQueue = new ArrayBlockingQueue<>(1000); // TODO: NAME AND THINK ABOUT QUEUE SIZE
+    private final Deque<ActionQueueEntry> sotaActionQueue = new ArrayDeque<>(); // TODO: NAME AND THINK ABOUT QUEUE SIZE
+
+    private final ReentrantLock waitLock = new ReentrantLock(); // lock to enforce order of operations
+    private final Condition hasItem = waitLock.newCondition();
+    private Condition condDoneHandlingItem = waitLock.newCondition();
+    private volatile boolean handlingItem = false;
+    private volatile boolean waitForItem = false;
 
     static private class ActionQueueEntry {
         CRobotPose pose;
@@ -50,10 +59,6 @@ public class SotaConnector implements Runnable {
 
     public boolean isMotorsEnabled() {
         return motorsEnabled;
-    }
-
-    public void addPoseToActionQueue(CRobotPose pose, int msec) {
-        sotaActionQueue.add(new ActionQueueEntry(pose, msec));
     }
 
     public double[] getMotorValuesAsRadians() {
@@ -102,25 +107,97 @@ public class SotaConnector implements Runnable {
         sotaMem.Disconnect();
     }
 
+    public void addPoseToActionQueue(CRobotPose pose, PoseCommand.CommandType command, int msec) {
+        ActionQueueEntry entry = new ActionQueueEntry(pose, msec);
+
+        try {
+            waitLock.lock();
+            switch (command) {
+                case APPEND:
+                    sotaActionQueue.addLast(entry);
+                    hasItem.signalAll();
+                    break;
+
+                case PREPEND:
+                    sotaActionQueue.addFirst(entry);
+                    hasItem.signalAll();
+                    break;
+
+                case CLEAR_AND_ADD:   // doesn't interrupt. finishes current
+                    sotaActionQueue.clear();
+                    sotaActionQueue.addLast(entry);
+                    hasItem.signalAll();
+                    break;
+
+                case INTERRUPT_AND_PREPEND:
+                    try {
+                        sotaActionQueue.addFirst(entry);  // prepend before interrupting, while we have the lock
+
+                        if (handlingItem) {  // currently doing an action, so
+                            workerThread.interrupt(); // wakeup the timer
+                            System.out.println("called for interruption");
+                        }
+
+                        while (handlingItem) // wait until its done, protected for spurious wakeups
+                            condDoneHandlingItem.await(); // release lock and wait until signalled
+
+
+                        hasItem.signalAll();
+
+                    } catch (InterruptedException e) {
+                        ; // why would this happen? shutdown?
+                    }
+                    break;
+            }
+
+        } finally {
+            waitLock.unlock();
+        }
+    }
+
     // the Sota action queue managing thread
     @Override
     public void run() {
 
-        while(running) {
+        while (running) {
+            waitLock.lock();
+            ActionQueueEntry action = null;
             try {
-                ActionQueueEntry action = sotaActionQueue.take();
-                sotaMotion.play(action.pose, action.msec, this.sotaThreadKey);
-                Thread.sleep(action.msec);
-                /*TODO : manage waiting for action to finish. consider between doing a waituntildone, investigating
-                  if its interruptable, or, our own timers. Our own timers are intteruptable and also may do better
-                  to interleave action commands that are asked to do in parallel. Currently the action command only specifies
-                  where in the queue it goes, but we don't specify if its blocking or parallel. something to think on.
+                while (sotaActionQueue.isEmpty())
+                    hasItem.await();  // wait until we have an item
 
-                 */
+                System.out.println("Size "+sotaActionQueue.size());
+                action = sotaActionQueue.removeFirst();  // never blocks
+                System.out.println(action.msec + "  ");
+                handlingItem = true;
+
             } catch (InterruptedException e) {
-                // interrupted for some reason, try again by looping around.
+                ; // probably end of program.
+            } finally {
+                waitLock.unlock(); // unlock while doing work
+            }
+
+            // real work
+            if (action != null && running) {
+                sotaMotion.play(action.pose, action.msec, this.sotaThreadKey);
+                try {
+                    Thread.sleep(action.msec);
+                } catch (InterruptedException e) {
+                    System.out.println(e);
+                    ; // woken up or end of program
+                }
+            }
+
+            if (action != null && running) {
+                try {
+                    waitLock.lock();
+                    handlingItem = false;
+                    condDoneHandlingItem.signalAll();
+
+                } finally {
+                    waitLock.unlock();
+                }
             }
         }
-
     }
 }
