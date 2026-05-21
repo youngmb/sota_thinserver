@@ -6,18 +6,10 @@
 package sota.tools;
 
 import com.sun.jna.Native;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
-import java.awt.image.ImageObserver;
+
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriter;
-import jp.vstone.RobotLib.CPlayWave;
+
 import jp.vstone.RobotLib.CRobotUtil;
-import jp.vstone.camera.CameraCapture;
 
 public class Camera {
     private static final String TAG = "CameraCapture";
@@ -73,7 +65,7 @@ public class Camera {
         this.format = format;
         this.snapcamera = (LibCameraV4L2)Native.loadLibrary("libsotacamv4l2.so", LibCameraV4L2.class);
         this.fd = -1;
-        this.setsize(image_size);
+        this.setSize(image_size);
     }
 
     public boolean start() {
@@ -105,14 +97,14 @@ public class Camera {
         return false;
     }
 
-    private void setsize(ImageSize imageSize) {
+    private void setSize(ImageSize imageSize) {
         CRobotUtil.Debug("CameraCapture", "setsize");
 
         this.imageSize = imageSize;
         int bufsize = this.imageSize.width * this.imageSize.height;
         switch (this.format) {
             case YUV2:
-            case MJPG:
+            case MJPG:  // mjpeg much smaller but caps out at 16bpp
                 bufsize *= 2;
                 break;
             case BGR_3BYTE:
@@ -124,7 +116,7 @@ public class Camera {
 
     }
 
-    public int openDevice(String dev) throws IOException {
+    public void openDevice(String dev) throws IOException {
         CRobotUtil.Debug("CameraCapture", "openDevice " + dev);
         this.device = dev;
         CRobotUtil.Debug("CameraCapture", "openDevice");
@@ -145,7 +137,6 @@ public class Camera {
 
         this.b_capturing = true;
         CRobotUtil.Debug("CameraCapture", "fd " + this.fd);
-        return this.fd;
     }
 
     public int snap() throws IOException {
