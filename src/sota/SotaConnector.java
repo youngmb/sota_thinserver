@@ -41,8 +41,10 @@ public class SotaConnector implements Runnable {
     static private class ActionQueueEntry {
         CRobotPose pose;
         int msec;
+        PoseCommand.CommandType command;
 
-        ActionQueueEntry(CRobotPose pose, int msec) {  this.pose = pose;  this.msec = msec; }
+        ActionQueueEntry(CRobotPose pose, int msec, PoseCommand.CommandType command) {
+            this.pose = pose;  this.msec = msec; this.command = command;}
     }
 
     public SotaConnector() {
@@ -151,7 +153,7 @@ public class SotaConnector implements Runnable {
     }
 
     public void addPoseToActionQueue(CRobotPose pose, PoseCommand.CommandType command, int msec) {
-        ActionQueueEntry entry = new ActionQueueEntry(pose, msec);
+        ActionQueueEntry entry = new ActionQueueEntry(pose, msec, command);
 
         try {
             actionQueueLock.lock();
@@ -178,7 +180,7 @@ public class SotaConnector implements Runnable {
 
                         if (handlingItem) {  // currently doing an action, so
                             workerThread.interrupt(); // wakeup the timer
-                            System.out.println("called for interruption");
+//                            System.out.println("called for interruption");
                         }
 
                         while (handlingItem) // wait until its done, protected for spurious wakeups
@@ -208,9 +210,8 @@ public class SotaConnector implements Runnable {
                 while (sotaActionQueue.isEmpty())
                     hasItem.await();  // wait until we have an item
 
-                System.out.println("Size "+sotaActionQueue.size());
                 action = sotaActionQueue.removeFirst();  // never blocks
-                System.out.println(action.msec + "  ");
+                CRobotUtil.Log(TAG, "Handling action item "+action.command+" duration "+action.msec);
                 handlingItem = true;
 
             } catch (InterruptedException e) {
