@@ -12,6 +12,13 @@ watch -n 1 'curl http://localhost:8080/pose/ | python -m json.tool | grep -B 6 -
 watch -n 1 'curl http://localhost:8080/pose/ | python -m json.tool | grep -B 6 -A 5 \"rightHand\"'
 
 
+## IK test
+curl -X POST http://localhost:8080/pose -H "Content-Type: application/json" -d '{"endpointStatus":[{"endpoint_id":"leftHand","position":[0.03968523380421325,-0.08978818420387313,0.22]}],"move_msec":1000,"command":"APPEND"}'
+curl -X POST http://localhost:8080/pose -H "Content-Type: application/json" -d '{"endpointStatus":[{"endpoint_id":"leftHand","position":[0.03968523380421325,-0.08978818420387313,0.14]}],"move_msec":1001,"command":"APPEND"}'
+curl -X POST http://localhost:8080/pose -H "Content-Type: application/json" -d '{"endpointStatus":[{"endpoint_id":"leftHand","position":[0.03968523380421325,-0.08978818420387313,0.22]}],"move_msec":1002,"command":"APPEND"}'
+curl -X POST http://localhost:8080/pose -H "Content-Type: application/json" -d '{"endpointStatus":[{"endpoint_id":"leftHand","position":[0.03968523380421325,-0.08978818420387313,0.14]}],"move_msec":1003,"command":"APPEND"}'
+
+
 ## CLEAR AND ADD
 # this test of commands checks the clear and add item. We fill the queue with actions, but then finish with a clear and add. It should finish the first command, skipping the rest, then only doing the last.
 #it should start the first one moving all to one side with red eye, then jump right to 2004 when its done moving back to center and white eye.

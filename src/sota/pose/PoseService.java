@@ -88,7 +88,7 @@ public class PoseService {
         pose.SetLed(LEDMap);
 
         // set direct motor positions
-        if (!command.servoStatus.isEmpty()) {
+        if (!command.servoStatus.isEmpty()) { // only if we have motor commands
 
             Map<Byte, Short> poseMap = new HashMap<>();
             for (PoseStatus.ServoStatus servo : command.servoStatus) {
@@ -102,7 +102,7 @@ public class PoseService {
             }
             pose.SetPose(poseMap);
 
-        }  else { // only check IK if we didn't have direct motor commands
+        }  else { // only check IK if we didn't have direct motor commands. they conflict
             // set motors using IK to solve for given endpoints
             RealVector theta = null;
             for (PoseStatus.EndpointStatus endpoint: command.endpointStatus)
