@@ -2,13 +2,11 @@ package sota.pose;
 
 import httpserver.ActionResult;
 import jp.vstone.RobotLib.CRobotPose;
-import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealVector;
 import sota.SotaConnector;
 import sota.tools.Frames.FrameKeys;
 import sota.tools.LEDHelp;
 import sota.tools.LEDHelp.LEDs;
-import sota.tools.SotaInverseK;
 import sota.tools.ServoMapper;
 
 import java.util.HashMap;
@@ -51,7 +49,7 @@ public class PoseService {
 
     public PoseStatus getPoseStatus() {
         PoseStatus status = new PoseStatus();
-        double[] angles = sota.getMotorValuesAsRadians();
+        double[] angles = sota.getMotorAngles();
 
         // motors
         for (Map.Entry<String, Byte> entry : ServoMapper.motorIdByName.entrySet()) {
@@ -101,9 +99,9 @@ public class PoseService {
             // set motors using IK to solve for given endpoints
             RealVector theta = null;
             for (PoseStatus.EndpointStatus endpoint: command.endpointStatus)
-                theta = sota.solveIK(endpoint.endpoint_id, endpoint.translation, theta);
+                theta = sota.solveIK(endpoint.endpoint_id, endpoint.position, theta);
 
-            pose.SetPose( sota.getMotorValuesFromAngles(theta).getPose() );
+            pose.SetPose( sota.makePose(theta).getPose());
         }
         
         if (command.command == null) command.command = PoseCommand.CommandType.DEFAULT_COMMAND;

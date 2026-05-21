@@ -64,13 +64,8 @@ public class SotaConnector implements Runnable {
     public boolean isServosEnabled() {
         return servosEnabled;
     }
-
-    public double[] getMotorValuesAsRadians() {
-        return servoMapper.calcAngles_array(sotaMotion.getReadPose());
-    }
-    public CRobotPose getMotorValuesFromAngles(RealVector angles) { return servoMapper.calcMotorValues_pose(angles);}
     public void updateFK() {
-        FK = new SotaForwardK(servoMapper.calcAngles_vector(sotaMotion.getReadPose()));
+        FK = new SotaForwardK( servoMapper.extractAngles( sotaMotion.getReadPose() ) );
     }
 
     public PoseStatus.EndpointStatus getEndpointStatus(Frames.FrameKeys frame) {
@@ -83,15 +78,20 @@ public class SotaConnector implements Runnable {
         );
     }
 
-    public RealVector solveIK(String endpoint_id, double[] translation, RealVector startPosition){
-        if (startPosition == null) // if no
-            startPosition = servoMapper.calcAngles_vector(sotaMotion.getReadPose());
+    public RealVector solveIK(String endpoint_id, double[] position, RealVector startPosition){
+        if (startPosition == null) // if no start position given, start from current robot position
+            startPosition = MatrixUtils.createRealVector(servoMapper.extractAngles( sotaMotion.getReadPose() ));
 
-        SotaInverseK.solve(Frames.FrameKeys.L_HAND, SotaInverseK.JType.O, MatrixUtils.createRealVector(left), currentAngles);
+        return SotaInverseK.solve(Frames.FrameKeys.fromLabel(endpoint_id), SotaInverseK.JType.O, MatrixUtils.createRealVector(position), startPosition);
     }
 
     public CRobotPose getTargetPose() { return sotaMotion.getTargetPose();}
-    public CRobotPose getCurrentPose() { return sotaMotion.getReadPose();} // does not include color :(
+
+    public double[] getMotorAngles() {
+        return servoMapper.extractAngles(sotaMotion.getReadPose());
+    }
+
+    public CRobotPose makePose (RealVector angles) { return servoMapper.makePose(servoMapper.radToPos( angles ));}
 
     public boolean start() {
         if (!sotaMem.Connect()) { // connect to the robot's subsystem

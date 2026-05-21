@@ -61,7 +61,7 @@ public class ServoIKTest {
 		_sotaMotion.play(pose, 1000);
 		_sotaMotion.waitEndinterpAll();
 
-		SotaForwardK FK = new SotaForwardK(ranges.calcAngles_vector(_sotaMotion.getReadPose()));
+		SotaForwardK FK = new SotaForwardK(ranges.extractAngles(_sotaMotion.getReadPose()));
 		double[] leftCenter = MatrixHelp.getTrans(FK.frames.get(FrameKeys.L_HAND)).toArray();
 		double[] rightCenter = MatrixHelp.getTrans(FK.frames.get(FrameKeys.R_HAND)).toArray();
 		double[] headCenter = MatrixHelp.getTrans(FK.frames.get(FrameKeys.HEAD)).toArray();
@@ -70,7 +70,7 @@ public class ServoIKTest {
 
 		boolean first = true;
 		while (!_sotaMotion.isButton_Power()) {  // stop when the power button is pressed
-			RealVector currentAngles = ranges.calcAngles_vector(_sotaMotion.getReadPose());
+			RealVector currentAngles = MatrixUtils.createRealVector( ranges.extractAngles(_sotaMotion.getReadPose()) );
 			if (DEBUG_PRINT) MatrixHelp.printVector("angles", currentAngles);
 
 			// calculate new left/right hand positions as offset from their home position.
@@ -83,7 +83,7 @@ public class ServoIKTest {
 			theta = SotaInverseK.solve(FrameKeys.R_HAND, JType.O, MatrixUtils.createRealVector(right), theta);
 			theta = SotaInverseK.solve(FrameKeys.HEAD, JType.R, MatrixUtils.createRealVector(head), theta); ;
 
-			pose = ranges.calcMotorValues_pose(theta);
+			pose = ranges.makePose( ranges.radToPos(theta)  );
 
 			if (DEBUG_PRINT) {
 				MatrixHelp.printVector("post-IK angles ", theta);

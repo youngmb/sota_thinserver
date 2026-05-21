@@ -1,6 +1,5 @@
 package sota.tools;
 
-import java.awt.*;
 import java.io.*;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -65,9 +64,9 @@ public class ServoMapper implements Serializable {
     private Short[] _midpos = null;
     boolean _calibrationInitialized = false;
 
-    public CRobotPose getMinPose() { return makePose_fromPositions(_minpos);}
-    public CRobotPose getMaxPose() { return makePose_fromPositions(_maxpos);}
-    public CRobotPose getMidPose() { return makePose_fromPositions(_midpos);}
+    public CRobotPose getMinPose() { return makePose(_minpos);}
+    public CRobotPose getMaxPose() { return makePose(_maxpos);}
+    public CRobotPose getMidPose() { return makePose(_midpos);}
 
     public double getMinRad(String servoID) { return getMinRad(motorIdByName.get(servoID));}
     public double getMinRad(Byte servoID) {return _motorRanges_rad.get(servoID)[0];}
@@ -92,42 +91,16 @@ public class ServoMapper implements Serializable {
     ///==================== Angle <-> motor pos conversions
     ///====================  mostly utility functions to support working in different units
     ///
-    private CRobotPose makePose_fromPositions(Short[] pos) {
+    public CRobotPose makePose(Short[] pos) {
         CRobotPose pose = new CRobotPose();
         pose.SetPose(_servoIDs, pos);
         return pose;
     }
 
-    public CRobotPose makePose_fromRadians(double[] pos) {
-        Short[] motorPositions = new Short[pos.length];
+    public Short[] extractPositions(CRobotPose pose) { return pose.getServoAngles(_servoIDs);}
+    public double[] extractAngles(CRobotPose pose) { return posToRad(pose.getServoAngles(_servoIDs));}
 
-        for (int i=0; i<motorPositions.length; i++)
-            motorPositions[i] = radToPos(_servoIDs[i], pos[i]);
-        CRobotPose pose = new CRobotPose();
-        pose.SetPose(_servoIDs, motorPositions);
-        return pose;
-    }
-
-    public RealVector calcAngles_vector(CRobotPose pose) { return MatrixUtils.createRealVector(calcAngles_array(pose));}
-    public double[] calcAngles_array(CRobotPose pose) { // convert pose in motor positions to radians
-        Short[] rawAngles = pose.getServoAngles(_servoIDs);
-        double[] angles = new double[rawAngles.length];
-
-        for (int i=0; i<rawAngles.length; i++)
-            angles[i] = posToRad(_servoIDs[i], rawAngles[i]);
-
-        return angles;
-    }
-
-    public CRobotPose calcMotorValues_pose(RealVector angles) { // convert pose in angles to motor positions
-        Short[] rawAngles = new Short[angles.getDimension()];
-
-        for (int i=0; i<rawAngles.length; i++)
-            rawAngles[i] = radToPos(_servoIDs[i], angles.getEntry(i));
-       return makePose_fromPositions(rawAngles);
-    }
-
-    private double posToRad(Byte servoID, Short pos) { // convert motor position to angle, in radians
+    public double posToRad(Byte servoID, Short pos) { // convert motor position to angle, in radians
         double[] radRange = _motorRanges_rad.get(servoID);
         Byte index = IDtoIndex.get(servoID);
         double percent = 1; // avoid div by 0. no range, use 100%.
@@ -138,11 +111,28 @@ public class ServoMapper implements Serializable {
         return ( percent*(radRange[1]-radRange[0]) )+radRange[0];
     }
 
+    public double[] posToRad(Short[] positions) {
+        double[] angles = new double[positions.length];
+
+        for (int i=0; i<positions.length; i++)
+            angles[i] = posToRad(_servoIDs[i], positions[i]);
+
+        return angles;
+    }
+
     public short radToPos(Byte servoID, double angle) { // convert angles, in radians, to motor position
         Byte index = IDtoIndex.get(servoID);
         double[] radRange = _motorRanges_rad.get(servoID);
         double radPercent = (angle - radRange[0]) / (radRange[1]-radRange[0]);
         return (short)( (radPercent *  (_maxpos[index] - _minpos[index])) + _minpos[index] );
+    }
+
+    public Short[] radToPos(RealVector angles) { return radToPos(angles.toArray());}
+    public Short[] radToPos(double[] angles) {
+        Short[] positions = new Short[angles.length];
+        for (int i=0; i<angles.length; i++)
+            positions[i] = radToPos(_servoIDs[i], angles[i]);
+        return positions;
     }
 
     ///==================== Pretty Print

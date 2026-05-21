@@ -24,10 +24,10 @@ public class PoseStatus {
 
     public static class EndpointStatus {
         public String endpoint_id;
-        public double[] translation;
+        public double[] position;
         public double[] direction;
-        public EndpointStatus(String endpoint_id, double[] translation, double[] direction){
-            this.endpoint_id = endpoint_id; this.translation = translation; this.direction = direction;
+        public EndpointStatus(String endpoint_id, double[] position, double[] direction){
+            this.endpoint_id = endpoint_id; this.position = position; this.direction = direction;
         }
         EndpointStatus() {}
     }

@@ -1,7 +1,8 @@
 package sota.supportPrograms;
 
 import java.util.Arrays;
-import org.apache.commons.math3.linear.RealVector;
+
+import org.apache.commons.math3.linear.MatrixUtils;
 import jp.vstone.RobotLib.*;
 import sota.tools.MatrixHelp;
 import sota.tools.ServoMapper;
@@ -49,10 +50,10 @@ public class ServoAngleReader {
 
 			System.out.println("---"+ Arrays.toString(rawAngles));
 
-			RealVector angles = ranges.calcAngles_vector(pose);
-			MatrixHelp.printVector(angles);
+			double[] angles = ranges.extractAngles(pose);
+			MatrixHelp.printVector(MatrixUtils.createRealVector( angles));
 
-			pose = ranges.calcMotorValues_pose(angles);
+			pose = ranges.makePose( ranges.radToPos(angles) );
 			System.out.println("---"+ Arrays.toString(pose.getServoAngles(_sotaMotion.getDefaultIDs())));
 
 			System.out.flush();

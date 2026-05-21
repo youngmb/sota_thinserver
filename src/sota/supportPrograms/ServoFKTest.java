@@ -45,7 +45,7 @@ public class ServoFKTest {
 		while (!_sotaMotion.isButton_Power()) {
 			System.out.print("\033[H");  // move to origin
 			// SotaForwardK sotaforwardK = new SotaForwardK(ranges.calcAngles(_sotaMotion.getReadPose()));
-			SotaForwardK FK = new SotaForwardK(ranges.calcAngles_vector(_sotaMotion.getReadPose()));
+			SotaForwardK FK = new SotaForwardK(ranges.extractAngles(_sotaMotion.getReadPose()));
 
 			ranges.printMotorRanges(_sotaMotion.getReadpos());
 			// MatrixHelp.printFrame("body", FK.frames.get(Frames.BODY));
