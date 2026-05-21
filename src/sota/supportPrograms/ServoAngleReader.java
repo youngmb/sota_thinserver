@@ -3,8 +3,8 @@ package sota.supportPrograms;
 import java.util.Arrays;
 import org.apache.commons.math3.linear.RealVector;
 import jp.vstone.RobotLib.*;
-import sota.kinematics.MatrixHelp;
-import sota.kinematics.SotaMappingTools;
+import sota.tools.MatrixHelp;
+import sota.tools.ServoMapper;
 
 public class ServoAngleReader {
 	static final String TAG = "MotorAngleReader";   // set this to support the Sota logging system
@@ -31,7 +31,7 @@ public class ServoAngleReader {
 	}
 
 	void run() {
-		SotaMappingTools ranges = SotaMappingTools.Load();
+		ServoMapper ranges = ServoMapper.Load();
 		CRobotUtil.Log(TAG, "Servo Ranges Loaded");
 		ranges.printMotorRanges(_sotaMotion.getReadpos());
 
@@ -52,7 +52,7 @@ public class ServoAngleReader {
 			RealVector angles = ranges.calcAngles_vector(pose);
 			MatrixHelp.printVector(angles);
 
-			pose = ranges.calcMotorValues_vector(angles);
+			pose = ranges.calcMotorValues_pose(angles);
 			System.out.println("---"+ Arrays.toString(pose.getServoAngles(_sotaMotion.getDefaultIDs())));
 
 			System.out.flush();

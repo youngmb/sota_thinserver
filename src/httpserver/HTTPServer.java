@@ -15,7 +15,6 @@ import main.SotaSystemController;
 import sota.pose.PoseService;
 import sota.pose.PoseSystemStatus;
 import sota.pose.PoseCommand;
-import sota.pose.PoseStatus;
 
 import java.awt.*;
 import java.util.function.BiFunction;
@@ -111,20 +110,11 @@ public class HTTPServer {
                 PoseSystemStatus.class
         );
 
-        // joint-space radians
         createStatusEndpoint(
-                "/pose/jointspace",
-                PoseService::getJointSpaceStatus,
-                PoseService::postJointSpaceStatus,
+                "/pose",
+                PoseService::getPoseStatus,
+                PoseService::postPoseStatus,
                 PoseCommand.class
-        );
-
-        // world-space cartesian coordinates
-        createStatusEndpoint(
-                "/pose/worldspace_skeleton",
-                PoseService::getWorldSpaceStatus,
-                PoseService::postWorldSpaceStatus,
-                PoseStatus.class
         );
     }
 }

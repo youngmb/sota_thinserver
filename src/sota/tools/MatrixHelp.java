@@ -1,4 +1,4 @@
-package sota.kinematics;
+package sota.tools;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.RotationConvention;

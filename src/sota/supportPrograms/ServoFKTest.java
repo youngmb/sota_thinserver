@@ -1,10 +1,10 @@
 package sota.supportPrograms;
 
 import jp.vstone.RobotLib.*;
-import sota.kinematics.MatrixHelp;
-import sota.kinematics.SotaMappingTools;
-import sota.kinematics.SotaForwardK;
-import sota.kinematics.Frames.FrameKeys;
+import sota.tools.MatrixHelp;
+import sota.tools.ServoMapper;
+import sota.tools.SotaForwardK;
+import sota.tools.Frames.FrameKeys;
 
 public class ServoFKTest {
 	static final String TAG = "MotorFKTest";   // set this to support the Sota logging system
@@ -32,7 +32,7 @@ public class ServoFKTest {
 
 	void run() {
 
-		SotaMappingTools ranges = SotaMappingTools.Load();
+		ServoMapper ranges = ServoMapper.Load();
 		CRobotUtil.Log(TAG, "Servo Ranges Loaded");
 		ranges.printMotorRanges(_sotaMotion.getReadpos());
 

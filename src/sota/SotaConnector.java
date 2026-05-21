@@ -4,12 +4,14 @@ import jp.vstone.RobotLib.CRobotMem;
 import jp.vstone.RobotLib.CRobotPose;
 import jp.vstone.RobotLib.CRobotUtil;
 import jp.vstone.RobotLib.CSotaMotion;
-import sota.kinematics.*;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealVector;
+import sota.tools.*;
 import sota.pose.PoseCommand;
+import sota.pose.PoseStatus;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -19,21 +21,23 @@ public class SotaConnector implements Runnable {
 
     CRobotMem sotaMem = new CRobotMem();
     CSotaMotion sotaMotion = new CSotaMotion(sotaMem);
-    boolean motorsEnabled = false;
+
+    public ServoMapper servoMapper = null;
+    private SotaForwardK FK = null;
+    boolean servosEnabled = false;
     String sotaThreadKey = null;   // steal Sota's internal lock key so we can work across a different thread
 
     private Thread workerThread = null;
     private volatile boolean running = false;
 
-    public SotaMappingTools servoMapper = null;
+
 
     private final Deque<ActionQueueEntry> sotaActionQueue = new ArrayDeque<>(); // TODO: NAME AND THINK ABOUT QUEUE SIZE
 
-    private final ReentrantLock waitLock = new ReentrantLock(); // lock to enforce order of operations
-    private final Condition hasItem = waitLock.newCondition();
-    private Condition condDoneHandlingItem = waitLock.newCondition();
+    private final ReentrantLock actionQueueLock = new ReentrantLock(); // lock to enforce order of operations
+    private final Condition hasItem = actionQueueLock.newCondition();
+    private final Condition doneHandlingItem = actionQueueLock.newCondition();
     private volatile boolean handlingItem = false;
-    private volatile boolean waitForItem = false;
 
     static private class ActionQueueEntry {
         CRobotPose pose;
@@ -49,20 +53,41 @@ public class SotaConnector implements Runnable {
     public void enableMotors() {
         sotaMotion.play(sotaMotion.getReadPose(), 100, this.sotaThreadKey);  // make sure the target loc is current when enabling
         sotaMotion.ServoOn();
-        motorsEnabled = true;
+        servosEnabled = true;
     }
 
     public void disableMotors() {
         sotaMotion.ServoOff();
-        motorsEnabled = false;
+        servosEnabled = false;
     }
 
-    public boolean isMotorsEnabled() {
-        return motorsEnabled;
+    public boolean isServosEnabled() {
+        return servosEnabled;
     }
 
     public double[] getMotorValuesAsRadians() {
         return servoMapper.calcAngles_array(sotaMotion.getReadPose());
+    }
+    public CRobotPose getMotorValuesFromAngles(RealVector angles) { return servoMapper.calcMotorValues_pose(angles);}
+    public void updateFK() {
+        FK = new SotaForwardK(servoMapper.calcAngles_vector(sotaMotion.getReadPose()));
+    }
+
+    public PoseStatus.EndpointStatus getEndpointStatus(Frames.FrameKeys frame) {
+        if (FK==null) updateFK();
+
+        return new PoseStatus.EndpointStatus(
+                frame.label,
+                MatrixHelp.getTrans( FK.frames.get(frame)).toArray(),
+                FK.frames.get(frame).getColumn(0)  // 0 is x axis
+        );
+    }
+
+    public RealVector solveIK(String endpoint_id, double[] translation, RealVector startPosition){
+        if (startPosition == null) // if no
+            startPosition = servoMapper.calcAngles_vector(sotaMotion.getReadPose());
+
+        SotaInverseK.solve(Frames.FrameKeys.L_HAND, SotaInverseK.JType.O, MatrixUtils.createRealVector(left), currentAngles);
     }
 
     public CRobotPose getTargetPose() { return sotaMotion.getTargetPose();}
@@ -78,7 +103,7 @@ public class SotaConnector implements Runnable {
         sotaMotion.InitRobot_Sota();  // initialize the Sota VSMD
         CRobotUtil.Log(TAG, "Rev. " + sotaMem.FirmwareRev.get());
 
-        servoMapper = SotaMappingTools.Load();
+        servoMapper = ServoMapper.Load();
         if (servoMapper == null) {
             CRobotUtil.Log(TAG, "Failed to load servo ranges");
             return false;
@@ -111,7 +136,7 @@ public class SotaConnector implements Runnable {
         ActionQueueEntry entry = new ActionQueueEntry(pose, msec);
 
         try {
-            waitLock.lock();
+            actionQueueLock.lock();
             switch (command) {
                 case APPEND:
                     sotaActionQueue.addLast(entry);
@@ -139,7 +164,7 @@ public class SotaConnector implements Runnable {
                         }
 
                         while (handlingItem) // wait until its done, protected for spurious wakeups
-                            condDoneHandlingItem.await(); // release lock and wait until signalled
+                            doneHandlingItem.await(); // release lock and wait until signalled
 
                         hasItem.signalAll();  // if it was blocked waiting, let it know that an item is available.
 
@@ -150,7 +175,7 @@ public class SotaConnector implements Runnable {
             }
 
         } finally {
-            waitLock.unlock();
+            actionQueueLock.unlock();
         }
     }
 
@@ -159,7 +184,7 @@ public class SotaConnector implements Runnable {
     public void run() {
 
         while (running) {
-            waitLock.lock();
+            actionQueueLock.lock();
             ActionQueueEntry action = null;
             try {
                 while (sotaActionQueue.isEmpty())
@@ -173,7 +198,7 @@ public class SotaConnector implements Runnable {
             } catch (InterruptedException e) {
                 ; // probably end of program.
             } finally {
-                waitLock.unlock(); // unlock while doing work
+                actionQueueLock.unlock(); // unlock while doing work
             }
 
             // real work
@@ -189,12 +214,12 @@ public class SotaConnector implements Runnable {
 
             if (action != null && running) {
                 try {
-                    waitLock.lock();
+                    actionQueueLock.lock();
                     handlingItem = false;
-                    condDoneHandlingItem.signalAll();
+                    doneHandlingItem.signalAll();
 
                 } finally {
-                    waitLock.unlock();
+                    actionQueueLock.unlock();
                 }
             }
         }

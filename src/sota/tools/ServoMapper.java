@@ -1,4 +1,4 @@
-package sota.kinematics;
+package sota.tools;
 
 import java.awt.*;
 import java.io.*;
@@ -10,14 +10,11 @@ import java.util.Map;
 import jp.vstone.RobotLib.CRobotPose;
 import jp.vstone.RobotLib.CSotaMotion;
 
-public class SotaMappingTools implements Serializable {
+public class ServoMapper implements Serializable {
     private static final long serialVersionUID = 1L;
 
     final public static String FALLBACK_DEFAULT_FILENAME = "../resources/motorranges-default.dat";
     final public static String LOCAL_FILENAME = "./motorranges.dat";
-
-    final public static int SERVO_COUNT = 8;
-    final public static int LED_ENTRY_COUNT = 10; // RGB lights each count as 3
 
     public static TreeMap<Byte, Byte> IDtoIndex = null;
 
@@ -26,17 +23,17 @@ public class SotaMappingTools implements Serializable {
     // map to support type-safe String-> motor ID
     public static final Map<String, Byte> motorIdByName = new HashMap<>();
     static {
-        motorIdByName.put("BODY_Y", CSotaMotion.SV_BODY_Y);
-        motorIdByName.put("L_SHOULDER", CSotaMotion.SV_L_SHOULDER);
-        motorIdByName.put("L_ELBOW", CSotaMotion.SV_L_ELBOW);
-        motorIdByName.put("R_SHOULDER", CSotaMotion.SV_R_SHOULDER);
-        motorIdByName.put("R_ELBOW", CSotaMotion.SV_R_ELBOW);
-        motorIdByName.put("HEAD_Y", CSotaMotion.SV_HEAD_Y);
-        motorIdByName.put("HEAD_P", CSotaMotion.SV_HEAD_P);
-        motorIdByName.put("HEAD_R", CSotaMotion.SV_HEAD_R);
+        motorIdByName.put("body_yaw", CSotaMotion.SV_BODY_Y);
+        motorIdByName.put("left_shoulder", CSotaMotion.SV_L_SHOULDER);
+        motorIdByName.put("left_elbow", CSotaMotion.SV_L_ELBOW);
+        motorIdByName.put("right_shoulder", CSotaMotion.SV_R_SHOULDER);
+        motorIdByName.put("right_elbow", CSotaMotion.SV_R_ELBOW);
+        motorIdByName.put("head_yaw", CSotaMotion.SV_HEAD_Y);
+        motorIdByName.put("head_pitch", CSotaMotion.SV_HEAD_P);
+        motorIdByName.put("head_roll", CSotaMotion.SV_HEAD_R);
     }
 
-    public SotaMappingTools(Byte[] servoIDs) {
+    public ServoMapper(Byte[] servoIDs) {
         this._servoIDs = servoIDs;
         setupMotorRanges();
     }
@@ -59,66 +56,6 @@ public class SotaMappingTools implements Serializable {
             put(CSotaMotion.SV_HEAD_P, new double[]{-1.495996502, 1.495996502});
             put(CSotaMotion.SV_HEAD_R, new double[]{-2.617993878, 2.617993878});
         }};
-    }
-
-    ///==================== LED Mapping support functions
-    ///====================
-    public enum LEDs { // start index of light. note that RGB has 3 entries
-        POWER("power", 0, 3), // RGB
-        ///  I wonder what 3-7 are mapped to
-        EYE_L("leftEye", 11, 3), // RGB
-        EYE_R("rightEye", 8, 3),
-        MOUTH("mouth", 14, 1);
-
-        public final byte index;
-        public final int count;
-        public final String label;
-        LEDs(String label, int index, int count) {
-            this.index = (byte)index; this.count = count; this.label = label;
-        }
-
-        static public LEDs fromLabel(String label) {
-            for (LEDs led: LEDs.values()) {
-                if (label.equals(led.label))
-                    return led;
-            }
-            return null;
-        }
-    }
-
-    public static Color getLEDColor(Map<Byte, Short> LEDData, LEDs led) {
-        if (led.count == 1) { // monochrome
-            Short c = LEDData.get(led.index);
-            return new Color(c, c, c);
-
-        } else if (led.count == 3) {
-            Short r = LEDData.get(led.index);
-            Short g = LEDData.get((byte)(led.index+1));
-            Short b = LEDData.get((byte)(led.index+1));
-            return new Color(r, g, b);
-        }
-
-        // should never happen
-        return null;
-    }
-
-    public static void setLED(Map<Byte, Short> LEDMap, String LED, Color color){ setLED(LEDMap, LEDs.fromLabel(LED), color); }
-
-    public static void setLED(Map<Byte, Short> LEDMap, LEDs LED, Color color){
-        if (LEDMap == null || LED == null || color == null) {
-            System.err.println("ERROR: setting LED with null");
-            return;
-        }
-
-        boolean flipGreen = LED == LEDs.POWER; // special case for power button
-
-        float[] rgb = color.getRGBColorComponents(null);
-        for (int i = 0; i < LED.count; i++) {
-            short c = (short) (rgb[i] * 255);
-            if (flipGreen && i==1) // GREEN
-                c = (short)(255-c);
-            LEDMap.put((byte) (LED.index + i), c);
-        }
     }
 
     ///==================== Manage min/max/etc.
@@ -182,7 +119,7 @@ public class SotaMappingTools implements Serializable {
         return angles;
     }
 
-    public CRobotPose calcMotorValues_vector(RealVector angles) { // convert pose in angles to motor positions
+    public CRobotPose calcMotorValues_pose(RealVector angles) { // convert pose in angles to motor positions
         Short[] rawAngles = new Short[angles.getDimension()];
 
         for (int i=0; i<rawAngles.length; i++)
@@ -247,16 +184,16 @@ public class SotaMappingTools implements Serializable {
         return null;
     }
 
-    public static SotaMappingTools Load(){ return SotaMappingTools.Load(findFile());}
-    public static SotaMappingTools Load(String filename){
+    public static ServoMapper Load(){ return ServoMapper.Load(findFile());}
+    public static ServoMapper Load(String filename){
         if (filename == null) return null;
 
-        SotaMappingTools s = null;
+        ServoMapper s = null;
         try(
             FileInputStream fout = new FileInputStream(filename);
             ObjectInputStream ois = new ObjectInputStream(fout);
         ){
-            s = (SotaMappingTools) ois.readObject();
+            s = (ServoMapper) ois.readObject();
             ois.close();
             System.out.println("Loaded Servo Motor Ranges from "+filename);
         } catch (Exception ex) {

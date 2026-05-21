@@ -5,12 +5,12 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealVector;
 
 import jp.vstone.RobotLib.*;
-import sota.kinematics.MatrixHelp;
-import sota.kinematics.SotaMappingTools;
-import sota.kinematics.SotaForwardK;
-import sota.kinematics.Frames.FrameKeys;
-import sota.kinematics.SotaInverseK;
-import sota.kinematics.SotaInverseK.JType;
+import sota.tools.MatrixHelp;
+import sota.tools.ServoMapper;
+import sota.tools.SotaForwardK;
+import sota.tools.Frames.FrameKeys;
+import sota.tools.SotaInverseK;
+import sota.tools.SotaInverseK.JType;
 
 public class ServoIKTest {
 	static final String TAG = "MotorIKTest";   // set this to support the Sota logging system
@@ -49,7 +49,7 @@ public class ServoIKTest {
 		RADIUS = .035; // mm
 		ROTATION_SPEED = 0.5; // radians each time.
 
-		SotaMappingTools ranges = SotaMappingTools.Load();
+		ServoMapper ranges = ServoMapper.Load();
 		CRobotUtil.Log(TAG, "Servo Ranges Loaded");
 
 		_sotaMotion.ServoOn();
@@ -83,7 +83,7 @@ public class ServoIKTest {
 			theta = SotaInverseK.solve(FrameKeys.R_HAND, JType.O, MatrixUtils.createRealVector(right), theta);
 			theta = SotaInverseK.solve(FrameKeys.HEAD, JType.R, MatrixUtils.createRealVector(head), theta); ;
 
-			pose = ranges.calcMotorValues_vector(theta);
+			pose = ranges.calcMotorValues_pose(theta);
 
 			if (DEBUG_PRINT) {
 				MatrixHelp.printVector("post-IK angles ", theta);

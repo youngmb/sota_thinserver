@@ -10,6 +10,7 @@ import java.util.List;
 
 public class PoseStatus {
     public List<ServoStatus> servoStatus = new ArrayList<>();
+    public List<EndpointStatus> endpointStatus = new ArrayList<>();
     public List<LEDStatus> LEDStatus = new ArrayList<>();
 
     public static class ServoStatus {
@@ -19,6 +20,16 @@ public class PoseStatus {
             this.servo_id = servo_id; this.radians = radians;
         }
         ServoStatus() {}
+    }
+
+    public static class EndpointStatus {
+        public String endpoint_id;
+        public double[] translation;
+        public double[] direction;
+        public EndpointStatus(String endpoint_id, double[] translation, double[] direction){
+            this.endpoint_id = endpoint_id; this.translation = translation; this.direction = direction;
+        }
+        EndpointStatus() {}
     }
 
     public static class LEDStatus {

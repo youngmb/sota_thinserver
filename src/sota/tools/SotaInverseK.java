@@ -1,4 +1,4 @@
-package sota.kinematics;
+package sota.tools;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -6,7 +6,7 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 
-import sota.kinematics.Frames.FrameKeys;
+import sota.tools.Frames.FrameKeys;
 
 public class SotaInverseK {
     private static double NUMERICAL_DELTA_rad = 1e-10;
