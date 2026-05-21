@@ -64,7 +64,14 @@ public class SotaConnector implements Runnable {
     public boolean isServosEnabled() {
         return servosEnabled;
     }
-    public void updateFK() {
+
+    public void setTalkingLED(boolean enabled) {
+        if (enabled)
+            sotaMotion.enabeMouthLEDVoiceSync();
+        else
+            sotaMotion.disabeMouthLEDVoiceSync();
+    }
+ public void updateFK() {
         FK = new SotaForwardK( servoMapper.extractAngles( sotaMotion.getReadPose() ) );
     }
 
@@ -205,7 +212,7 @@ public class SotaConnector implements Runnable {
             if (action != null && running) {
                 sotaMotion.play(action.pose, action.msec, this.sotaThreadKey);
                 try {
-                    Thread.sleep(action.msec);
+                    Thread.sleep(action.msec); // does not compensate for spurious wakeups
                 } catch (InterruptedException e) {
                     System.out.println(e);
                     ; // woken up or end of program

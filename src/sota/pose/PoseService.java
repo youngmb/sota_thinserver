@@ -15,6 +15,7 @@ import java.util.Map;
 public class PoseService {
 
     boolean servosEnabled = false;
+    Boolean talkingLEDEnabled = null; // we don't know the initial state for sure
     SotaConnector sota;
 
     public PoseService(SotaConnector sota) {
@@ -43,6 +44,10 @@ public class PoseService {
                 sota.disableMotors();
                 this.servosEnabled = false;
             }
+        }
+        if (status.talkingLEDEnabled != null && (this.talkingLEDEnabled == null || status.talkingLEDEnabled != this.talkingLEDEnabled)) {
+            sota.setTalkingLED(status.talkingLEDEnabled);
+            this.talkingLEDEnabled = status.talkingLEDEnabled;
         }
         return ActionResult.ok();
     }

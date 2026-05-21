@@ -14,6 +14,7 @@ public class PoseSystemStatus {
         public String servo_id;
         public Double range_min;
         public Double range_max;
+        ServoCapability() {}
         ServoCapability(String servo_id, Double range_min, Double range_max){
             this.servo_id = servo_id; this.range_min = range_min; this.range_max = range_max;
         }
