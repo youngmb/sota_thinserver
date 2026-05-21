@@ -5,6 +5,7 @@ import jp.vstone.RobotLib.CRobotPose;
 import jp.vstone.RobotLib.CRobotUtil;
 import jp.vstone.RobotLib.CSotaMotion;
 import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import sota.tools.*;
 import sota.pose.PoseCommand;
@@ -29,8 +30,6 @@ public class SotaConnector implements Runnable {
 
     private Thread workerThread = null;
     private volatile boolean running = false;
-
-
 
     private final Deque<ActionQueueEntry> sotaActionQueue = new ArrayDeque<>(); // TODO: NAME AND THINK ABOUT QUEUE SIZE
 
@@ -71,17 +70,29 @@ public class SotaConnector implements Runnable {
         else
             sotaMotion.disabeMouthLEDVoiceSync();
     }
- public void updateFK() {
+
+    public void updateFK() {
         FK = new SotaForwardK( servoMapper.extractAngles( sotaMotion.getReadPose() ) );
     }
 
     public PoseStatus.EndpointStatus getEndpointStatus(Frames.FrameKeys frame) {
         if (FK==null) updateFK();
 
+        RealMatrix T = FK.frames.get(frame);
+        double[] position = MatrixHelp.getTrans(T).getSubVector(0,3).toArray();
+        double[] pointDir = FK.getPointDir(frame).getSubVector(0, 3).toArray();
+        double[] ypr = MatrixHelp.getZYXRot(T);
+
+        // note that our pitch is X and roll is Y (typically reversed) so need to switch to get YPR
+        double tmp = ypr[1];
+        ypr[1] = ypr[2];
+        ypr[2] = tmp;
+
         return new PoseStatus.EndpointStatus(
                 frame.label,
-                MatrixHelp.getTrans( FK.frames.get(frame)).toArray(),
-                FK.frames.get(frame).getColumn(0)  // 0 is x axis
+                position,
+                pointDir,
+                ypr
         );
     }
 

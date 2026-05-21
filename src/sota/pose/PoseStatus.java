@@ -25,9 +25,13 @@ public class PoseStatus {
     public static class EndpointStatus {
         public String endpoint_id;
         public double[] position;
-        public double[] direction;
-        public EndpointStatus(String endpoint_id, double[] position, double[] direction){
-            this.endpoint_id = endpoint_id; this.position = position; this.direction = direction;
+        public double[] pointDirection;
+        public double[] ypr;
+
+        public EndpointStatus(String endpoint_id,
+                              double[] position, double[] pointDirection, double[] ypr){
+            this.endpoint_id = endpoint_id; this.position = position; this.pointDirection = pointDirection;
+            this.ypr = ypr;
         }
         EndpointStatus() {}
     }

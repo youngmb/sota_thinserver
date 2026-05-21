@@ -48,4 +48,32 @@ public class SotaForwardK {
         frames.put(FrameKeys.R_HAND, _r_hand_to_origin);
         frames.put(FrameKeys.L_HAND, _l_hand_to_origin);
     }
+
+    public RealVector getPointDir(FrameKeys frame) {
+        RealVector dir = null;
+        RealVector dir2 = null;
+
+        switch (frame) {
+            case HEAD: // just extract the y axis from the head frame
+                dir = frames.get(frame)
+                        .getColumnVector(1)// 0 is x axis, 1 is y, 2 is z, 3 is trans
+                        .mapMultiplyToSelf(-1); // y axis is pointing behind robot, we want -Y for look dir
+                break;
+
+            case R_HAND:
+                dir = calcHandPointDirInWorld(FrameKeys.R_HAND, R_SHOULDER_DIR);
+                break;
+
+            case L_HAND:
+                dir = calcHandPointDirInWorld(FrameKeys.L_HAND, L_SHOULDER_DIR);
+                break;
+        }
+        return dir;
+    }
+
+    private RealVector calcHandPointDirInWorld(FrameKeys frame, RealVector dir) {
+        RealMatrix R = frames.get(frame);
+        R.setColumn(3, new double[]{0,0,0,1});// kill T, get R only.
+        return R.operate(dir).unitVector();
+    }
 }

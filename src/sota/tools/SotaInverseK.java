@@ -68,7 +68,7 @@ public class SotaInverseK {
 
     static private RealVector getFKOutput(Map<FrameKeys, RealMatrix> frames, FrameKeys frameType, JType outputType) {
         RealMatrix frame = frames.get(frameType);
-        return outputType == JType.O ? MatrixHelp.getTrans(frame).getSubVector(0, 3) : MatrixHelp.getYPRVec(frame);
+        return outputType == JType.O ? MatrixHelp.getTrans(frame).getSubVector(0, 3) : MatrixHelp.getZYXRot_vec(frame);
     }
     // solves for the target pose on the given frame and type, starting at the current angle configuration.
     static public RealVector solve(FrameKeys frameType, JType jtype, RealVector targetPose, RealVector curMotorAngles) {

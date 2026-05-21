@@ -194,7 +194,7 @@ public class ServoMapper implements Serializable {
         return s;
     }
 
-    public void save() { save(findFile());}
+    public void save() { save(LOCAL_FILENAME);}
     public void save(String filename) {
         if (filename==null) return;
 

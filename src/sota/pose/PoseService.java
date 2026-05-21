@@ -15,7 +15,7 @@ import java.util.Map;
 public class PoseService {
 
     boolean servosEnabled = false;
-    Boolean talkingLEDEnabled = null; // we don't know the initial state for sure
+    boolean talkingLEDEnabled = false; // we don't know the initial state for sure
     SotaConnector sota;
 
     public PoseService(SotaConnector sota) {
@@ -25,6 +25,7 @@ public class PoseService {
     public PoseSystemStatus getSystemStatus() {
         PoseSystemStatus status = new PoseSystemStatus();
         status.servosEnabled = sota.isServosEnabled();
+        status.talkingLEDEnabled = this.talkingLEDEnabled;
 
         for (String key : ServoMapper.motorIdByName.keySet()) {
             status.servoCapabilities.add(new PoseSystemStatus.ServoCapability(
@@ -45,7 +46,7 @@ public class PoseService {
                 this.servosEnabled = false;
             }
         }
-        if (status.talkingLEDEnabled != null && (this.talkingLEDEnabled == null || status.talkingLEDEnabled != this.talkingLEDEnabled)) {
+        if (status.talkingLEDEnabled != null && (status.talkingLEDEnabled != this.talkingLEDEnabled)) {
             sota.setTalkingLED(status.talkingLEDEnabled);
             this.talkingLEDEnabled = status.talkingLEDEnabled;
         }
@@ -63,6 +64,7 @@ public class PoseService {
         }
 
         // endpoints (world space)
+        sota.updateFK();
         for (FrameKeys frame: FrameKeys.values())
             status.endpointStatus.add( sota.getEndpointStatus(frame) );
 

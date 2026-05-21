@@ -6,7 +6,7 @@ import java.util.List;
 public class PoseSystemStatus {
 
     public Boolean servosEnabled = false;
-    public Boolean talkingLEDEnabled = false;  // TODO: implement
+    public Boolean talkingLEDEnabled = false;
 
     public List<ServoCapability> servoCapabilities = new ArrayList<>();
 

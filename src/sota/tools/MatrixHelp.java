@@ -94,10 +94,12 @@ public class MatrixHelp {  // creates homogeneous rotation matrices
     }
 
     // extract the YPR from the given rotation matrix. Note the order since R is done first it is the third value.
-    public static RealVector getYPRVec(RealMatrix R) {return MatrixUtils.createRealVector(getYPR(R)); }
-    public static double[] getYPR(RealMatrix R) {  
-        RealMatrix subR = R.getSubMatrix(0, 2, 0, 2);
-        return (new Rotation(subR.getData(), 1.0e-10)).getAngles(RotationOrder.ZYX, RotationConvention.VECTOR_OPERATOR);
+    public static RealVector getZYXRot_vec(RealMatrix R) { return MatrixUtils.createRealVector(getZYXRot(R)); }
+    public static double[] getZYXRot_ROnly(RealMatrix R) {
+        return (new Rotation(R.getData(), 1.0e-10)).getAngles(RotationOrder.ZYX, RotationConvention.VECTOR_OPERATOR);
+    }
+    public static double[] getZYXRot(RealMatrix R) {
+        return getZYXRot_ROnly(R.getSubMatrix(0, 2, 0, 2));
     }
 
     public static RealVector getTrans(RealMatrix R) { // extract the translation from a Rt matrix.
@@ -162,7 +164,7 @@ public class MatrixHelp {  // creates homogeneous rotation matrices
         for (int i = 0; i < t.getDimension(); i++)
             System.out.printf("%"+spacing+"."+precision+"f ", t.getEntry(i)); // 6 characters wide, 2 decimal places
 
-        double[] ypr = getYPR(R);
+        double[] ypr = getZYXRot(R);
         System.out.print("  ypr: ");
         for (int i = 0; i < ypr.length; i++)
             System.out.printf("%"+spacing+"."+precision+"f ", ypr[i]); // 6 characters wide, 2 decimal places

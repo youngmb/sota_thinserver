@@ -1,0 +1,70 @@
+#  These can be pasted into the command line to test different things.
+
+
+### TEST
+
+#get the pose information
+curl http://localhost:8080/pose/ | python -m json.tool
+
+## repeats the command and only shows the head direction. I used this for debugging
+watch -n 1 'curl http://localhost:8080/pose/ | python -m json.tool | grep -B 6 -A 5 \"head\"'
+watch -n 1 'curl http://localhost:8080/pose/ | python -m json.tool | grep -B 6 -A 5 \"leftHand\"'
+watch -n 1 'curl http://localhost:8080/pose/ | python -m json.tool | grep -B 6 -A 5 \"rightHand\"'
+
+
+## CLEAR AND ADD
+# this test of commands checks the clear and add item. We fill the queue with actions, but then finish with a clear and add. It should finish the first command, skipping the rest, then only doing the last.
+#it should start the first one moving all to one side with red eye, then jump right to 2004 when its done moving back to center and white eye.
+curl -X POST http://localhost:8080/pose/system -H "Content-Type: application/json" -d '{"servosEnabled":"true"}'
+curl -X POST http://localhost:8080/pose -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": -1}],"move_msec":2001,"LEDStatus":[{"led_id":"leftEye","color":"#FF0000"}]}'
+curl -X POST http://localhost:8080/pose -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 0.5}],"move_msec":2002,"command":"APPEND","LEDStatus":[{"led_id":"leftEye","color":"#FFFFFF"}]}'
+curl -X POST http://localhost:8080/pose -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 1}],"move_msec":2003,"command":"APPEND","LEDStatus":[{"led_id":"leftEye","color":"#FFFFFF"}]}'
+curl -X POST http://localhost:8080/pose -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 0}],"move_msec":2004,"command":"CLEAR_AND_ADD","LEDStatus":[{"led_id":"leftEye","color":"#FFFFFF"}]}'
+
+
+# this test of commands checks the interrupt the look right and pre-pend. It should stop the current running command, do the new one first, THEN continue.
+#you can monitor by seeing the eye color. It shold barely move toward white and the leff, then go straight to RED before proceeding to green then blue on opposite sides
+### INTERRUPT AND PREPEND
+curl -X POST http://localhost:8080/pose/system -H "Content-Type: application/json" -d '{"servosEnabled":"true"}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 1}],"move_msec":2001,"LEDStatus":[{"led_id":"leftEye","color":"#FFFFFF"}]}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": -1}],"move_msec":2002,"command":"APPEND","LEDStatus":[{"led_id":"leftEye","color":"#00FF00"}]}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 1}],"move_msec":2003,"command":"APPEND","LEDStatus":[{"led_id":"leftEye","color":"#0000FF"}]}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 0}],"move_msec":2004,"command":"INTERRUPT_AND_PREPEND","LEDStatus":[{"led_id":"leftEye","color":"#FF0000"}]}'
+
+
+# this test of commands checks standard append behavior. Command does not need to be specified, its the default
+curl -X POST http://localhost:8080/pose/system -H "Content-Type: application/json" -d '{"servosEnabled":"true"}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 1}],"move_msec":2001,"LEDStatus":[{"led_id":"leftEye","color":"#FFFFFF"}]}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": -1}],"move_msec":2002,"LEDStatus":[{"led_id":"leftEye","color":"#00FF00"}]}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 1}],"move_msec":2003,"command":"APPEND","LEDStatus":[{"led_id":"leftEye","color":"#0000FF"}]}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 0}],"move_msec":2004,"LEDStatus":[{"led_id":"leftEye","color":"#FF0000"}]}'
+
+
+# this test of commands checks PREPEND behavior. It should go 2001 then 2004,2003,2002
+curl -X POST http://localhost:8080/pose/system -H "Content-Type: application/json" -d '{"servosEnabled":"true"}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 1}],"move_msec":2001,"command":"PREPEND","LEDStatus":[{"led_id":"leftEye","color":"#FFFFFF"}]}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": -1}],"move_msec":2002,"command":"PREPEND","LEDStatus":[{"led_id":"leftEye","color":"#00FF00"}]}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 1}],"move_msec":2003,"command":"PREPEND","LEDStatus":[{"led_id":"leftEye","color":"#0000FF"}]}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 0}],"move_msec":2004,"command":"PREPEND","LEDStatus":[{"led_id":"leftEye","color":"#FF0000"}]}'
+
+
+
+####RANDOM collection
+curl -X POST http://localhost:8080/pose/system -H "Content-Type: application/json" -d '{"servosEnabled":"true"}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": -1}],"move_msec":1000,"LEDStatus":[{"led_id":"leftEye","color":"#FF0000"}]}'
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians": 1}],"move_msec":1000,"LEDStatus":[{"led_id":"leftEye","color":"#FFFFFF"}]}'
+
+
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"servoStatus":[{"servo_id":"head_yaw","radians":1}],"LEDStatus":[{"led_id":"leftEye","color":"#00aaaa"}]}'
+
+curl http://localhost:8080/pose/
+jointspace
+
+
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"LEDStatus":[{"led_id":"power","color":"#00FF00"},{"led_id":"leftEye","color":"#00aa00"},{"led_id":"rightEye","color":"#FFFFFF"},{"led_id":"mouth","color":"#ff"}]}'
+
+
+curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application/json" -d '{"LEDStatus":[{"led_id":"power","color":"#00FF00"},{"led_id":"mouth","color":"#ff"}]}'
+
+
+curl -X POST http://localhost:8080/pose/system -H "Content-Type: application/json" -d '{"servosEnabled":"false"}'
