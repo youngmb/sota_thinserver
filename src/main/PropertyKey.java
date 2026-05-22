@@ -9,6 +9,9 @@ public enum PropertyKey {
    KEY_NET_UDP_WAITBUFFER_SIZE("net_UDP_waitbuffer_size", "5"),
    KEY_NET_HTTP_PORT("net_http_port", "8080"),
 
+    // Video
+    KEY_VID_BITRATE_CAP("vid_bitrate_cap_kbps",  "2000"),
+
     // Mic
     KEY_MIC_SAMPLE_RATE("microphone_sample_rate", "16000"),
     KEY_MIC_BUFFER_SIZE("microphone_buffer_size", "512"),

@@ -10,6 +10,10 @@ import com.sun.jna.Native;
 import java.io.*;
 
 import jp.vstone.RobotLib.CRobotUtil;
+import videoStreaming.VideoFrame;
+import videoStreaming.VideoFrame.ImageSize;
+import videoStreaming.VideoFrame.ImageFormat;
+
 
 public class Camera {
     private static final String TAG = "CameraCapture";
@@ -21,44 +25,13 @@ public class Camera {
 
     LibCameraV4L2 snapcamera;
     private ImageSize imageSize;
-    private CaptureFormat format;
+    private ImageFormat format;
     private int fd;
     private boolean b_capturing = false;
     private byte[] imagedata;
     String device = "/dev/video0";
 
-    public enum ImageSize {
-        QVGA(320, 240),
-        VGA(640, 480),
-        SVGA(800, 600),
-        XGA(1024, 768),
-        HD_720(1280, 720),
-        SXGA(1280, 1024),
-        UXGA(1600, 1200),
-        HD_1080(1920, 1080),
-        QXGA(2048, 1536),
-        MP_5(2592, 1944);
-
-        public final int width;
-        public final int height;
-
-        ImageSize(int width, int height) { this.width = width;  this.height = height;}
-    }
-
-    public enum CaptureFormat {  // to fit the underlying library
-        YUV2(0),
-        MJPG(1),
-        BGR_3BYTE(2),
-        BYTE_GRAY(3);
-
-        public final int libraryKey;
-
-        CaptureFormat(int libraryKey) {
-            this.libraryKey = libraryKey;
-        }
-    }
-
-    public Camera(ImageSize image_size, CaptureFormat format) {
+    public Camera(ImageSize image_size, ImageFormat format) {
         CRobotUtil.setDebugOut("CameraCapture", false);
         CRobotUtil.Debug("CameraCapture", "SotaCameraStill");
 
@@ -139,7 +112,7 @@ public class Camera {
         CRobotUtil.Debug("CameraCapture", "fd " + this.fd);
     }
 
-    public int snap() throws IOException {
+    public VideoFrame snap() {
         int retrycnt = 0;
         CRobotUtil.Debug("CameraCapture", "snap");
         int length = -1;
@@ -148,24 +121,28 @@ public class Camera {
             length = this.snapcamera.get_capturing(this.fd, this.format.libraryKey, this.imageSize.width, this.imageSize.height, this.imagedata);
             if (length >= 0) {
                 retrycnt = 0;
-                return length;
+                return new VideoFrame(length, this.imagedata);
             }
 
-            ++retrycnt;
-            CRobotUtil.Debug("CameraCapture", "retrycnt " + retrycnt);
-            if (retrycnt < 3) {
-                this.snapcamera.stop_capturing(this.fd);
-                this.snapcamera.close_device(this.fd);
-                this.snapcamera.uninit_device(this.fd);
-                CRobotUtil.Debug("CameraCapture", "Retry  openDevice" + retrycnt);
-                CRobotUtil.wait(1500);
-                this.openDevice(this.device);
-            } else {
-                this.b_capturing = false;
-                this.snapcamera.stop_capturing(this.fd);
-                this.snapcamera.close_device(this.fd);
-                this.snapcamera.uninit_device(this.fd);
-                this.onThrowCamError("can not snap video device:" + length);
+            try {
+                ++retrycnt;
+                CRobotUtil.Debug("CameraCapture", "retrycnt " + retrycnt);
+                if (retrycnt < 3) {
+                    this.snapcamera.stop_capturing(this.fd);
+                    this.snapcamera.close_device(this.fd);
+                    this.snapcamera.uninit_device(this.fd);
+                    CRobotUtil.Debug("CameraCapture", "Retry  openDevice" + retrycnt);
+                    CRobotUtil.wait(1500);
+                    this.openDevice(this.device);
+                } else {
+                    this.b_capturing = false;
+                    this.snapcamera.stop_capturing(this.fd);
+                    this.snapcamera.close_device(this.fd);
+                    this.snapcamera.uninit_device(this.fd);
+                    this.onThrowCamError("can not snap video device:" + length);
+                }
+            } catch (IOException e) {
+                System.out.println(e);  // but don't propagate
             }
         }
     }
@@ -182,10 +159,5 @@ public class Camera {
         IOException ex = new IOException(comment);
         CRobotUtil.PutErrorLogFile(ex);
         throw ex;
-    }
-
-    public byte[] getImageRawData() {
-        CRobotUtil.Debug("CameraCapture", "getImageRawData");
-        return this.imagedata;
     }
 }

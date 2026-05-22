@@ -15,6 +15,8 @@ import main.SotaSystemController;
 import sota.pose.PoseService;
 import sota.pose.PoseSystemStatus;
 import sota.pose.PoseCommand;
+import videoStreaming.VideoService;
+import videoStreaming.VideoStatus;
 
 import java.awt.*;
 import java.util.function.BiFunction;
@@ -44,7 +46,6 @@ public class HTTPServer {
     }
 
     public void stop() {        if (app != null)  app.stop();     }
-
 
     private void setCtxError(Context ctx, String error) {   // generate an error response instead of stack trace
         ctx.status(400); // malformed request
@@ -100,21 +101,32 @@ public class HTTPServer {
         );
     }
 
-    public void enablePoseEndpoints(PoseService PoseService) {
+    public void enablePoseEndpoints(PoseService poseService) {
 
         // general motor information
         createStatusEndpoint(
                 "/pose/system",
-                PoseService::getSystemStatus,
-                PoseService::postSystemStatus,
+                poseService::getSystemStatus,
+                poseService::postSystemStatus,
                 PoseSystemStatus.class
         );
 
         createStatusEndpoint(
                 "/pose",
-                PoseService::getPoseStatus,
-                PoseService::postPoseStatus,
+                poseService::getPoseStatus,
+                poseService::postPoseStatus,
                 PoseCommand.class
+        );
+    }
+
+    public void enableVideoEndpoints(VideoService videoService) {
+
+        // general motor information
+        createStatusEndpoint(
+                "/video",
+                videoService::getStatus,
+                videoService::postStatus,
+                VideoStatus.class
         );
     }
 }

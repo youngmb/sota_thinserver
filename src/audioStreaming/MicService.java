@@ -37,7 +37,7 @@ public class MicService {
         if (isEnabled()) return true;
 
         try {
-            micUdpSender = new UdpSender(ip, port, Properties.getPropAsInt(PropertyKey.KEY_MIC_BUFFER_SIZE));
+            micUdpSender = new UdpSender(ip, port);
             micStreamer = new AudioStreamSender(micUdpSender::send);
             micStreamer.init();
             micStreamer.start();

@@ -2,6 +2,7 @@ package sota.supportPrograms;
 
 import jp.vstone.RobotLib.CRobotUtil;
 import sota.tools.Camera;
+import videoStreaming.VideoFrame;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -14,17 +15,17 @@ public class CameraSaveTest {
         Camera cam = new Camera(Camera.ImageSize.HD_1080, Camera.CaptureFormat.MJPG);
         cam.start();
         CRobotUtil.Log(TAG, "Camera Startup Successful");
-        int imagedataLength = 0;
+        VideoFrame frame = null;
 
         try {
-            imagedataLength = cam.snap();
+            frame = cam.snap();
         } catch (IOException e) {
             System.out.println("Error snapping image.");
             throw new RuntimeException(e);
         }
         CRobotUtil.Log(TAG, "Camera snap Successful");
         try (FileOutputStream fos = new FileOutputStream("frame.jpg")) {
-            fos.write(cam.getImageRawData(), 0, imagedataLength);
+            fos.write(frame.data, 0, frame.size);
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {

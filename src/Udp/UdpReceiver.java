@@ -23,14 +23,16 @@ public class UdpReceiver extends UdpStream implements Runnable {
     private final int[] waitBufferSeq = new int[waitBufferSize];
     private final byte[][] waitBufferData = new byte[waitBufferSize][];
     private int dataWaiting = 0; // number of packets saved
+    private int expectedBufferSize = 0;
 
     public UdpReceiver(int port,
                        BlockingQueue<byte[]> queue,
-                       int dataBufferSize) // expected size of incoming data
+                       int expectedBufferSize) // expected size of incoming data
             throws SocketException {
-        super(port, dataBufferSize);
+        super(port);
         this.queue = queue;
         this.port = port;
+        this.expectedBufferSize = expectedBufferSize;
     }
 
     public void start() {
@@ -117,7 +119,7 @@ public class UdpReceiver extends UdpStream implements Runnable {
 
     @Override
     public void run() {
-        byte[] buffer = new byte[bufferSize];
+        byte[] buffer = new byte[expectedBufferSize];
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
         try {
