@@ -1,10 +1,14 @@
 package videoStreaming;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class VideoFrame {
         public int size;
         public byte[] data;
         public VideoFrame(int size, byte[] data) { this.size = size; this.data = data;}
 
+        @JsonFormat(shape = JsonFormat.Shape.OBJECT)
         public enum ImageSize {
                 QVGA(320, 240),
                 VGA(640, 480),
@@ -21,6 +25,9 @@ public class VideoFrame {
                 public final int height;
 
                 ImageSize(int width, int height) { this.width = width;  this.height = height;}
+
+                // for the json serializer to expose the Enum name as well
+                public String getName() { return name();  }
         }
 
         public enum ImageFormat {  // to fit the underlying library
@@ -34,5 +41,8 @@ public class VideoFrame {
                 ImageFormat(int libraryKey) {
                         this.libraryKey = libraryKey;
                 }
+
+                // for the json serializer to expose the Enum name as well
+                public String getName() { return name();  }
         }
 }

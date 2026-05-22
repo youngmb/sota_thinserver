@@ -3,6 +3,8 @@ package main;
 // SETUP the property keys all here. This keeps them all in one place and avoids
 // having stray strings everywhere that need maintenance
 
+import videoStreaming.VideoFrame;
+
 public enum PropertyKey {
    // Network
    KEY_NET_SEQ_MOD("net_seq_mod", "1000000"), // packet sequence numbers always positive, when to wrap
@@ -11,6 +13,8 @@ public enum PropertyKey {
 
     // Video
     KEY_VID_BITRATE_CAP("vid_bitrate_cap_kbps",  "2000"),
+    KEY_VID_IMAGE_FORMAT("vid_image_format", VideoFrame.ImageFormat.MJPG.getName()),
+    KEY_VID_IMAGE_SIZE("vid_image_size", VideoFrame.ImageSize.QVGA.getName()),
 
     // Mic
     KEY_MIC_SAMPLE_RATE("microphone_sample_rate", "16000"),

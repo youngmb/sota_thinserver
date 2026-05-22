@@ -3,6 +3,13 @@
 
 ### TEST
 
+
+### VIDEO test
+curl http://localhost:8080/video | python -m json.tool
+curl -X POST http://localhost:8080/video -H "Content-Type: application/json" -d '{"enabled":true,"streamPort":52003,"streamImageSize":null,"streamImageFormat":null,"bitrate_cap_kbps":2000}'
+curl -X POST http://localhost:8080/video -H "Content-Type: application/json" -d '{"enabled":false}'
+
+
 #get the pose information
 curl http://localhost:8080/pose/ | python -m json.tool
 
