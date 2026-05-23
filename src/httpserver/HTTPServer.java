@@ -15,6 +15,7 @@ import main.SotaSystemController;
 import sota.pose.PoseService;
 import sota.pose.PoseSystemStatus;
 import sota.pose.PoseCommand;
+import videoStreaming.VideoCapabilities;
 import videoStreaming.VideoService;
 import videoStreaming.VideoStatus;
 
@@ -45,7 +46,7 @@ public class HTTPServer {
         }).start(httpPort);
     }
 
-    public void stop() {        if (app != null)  app.stop();     }
+    public void stop() { if (app != null)  app.stop(); }
 
     private void setCtxError(Context ctx, String error) {   // generate an error response instead of stack trace
         ctx.status(400); // malformed request
@@ -59,27 +60,29 @@ public class HTTPServer {
             Class<postT> postType  // needed because of type erasure
     ) {
 
-        app.get(path, ctx -> {
-            ctx.json(getter.get());
-        });
+        if (getter != null)
+            app.get(path, ctx -> {
+                ctx.json(getter.get());
+            });
 
-        app.post(path, ctx -> {
-            try {
-                postT req = mapper.readValue(ctx.body(), postType);
-                ActionResult ar = setter.apply(req, ctx.ip());
+        if (setter != null)
+            app.post(path, ctx -> {
+                try {
+                    postT req = mapper.readValue(ctx.body(), postType);
+                    ActionResult ar = setter.apply(req, ctx.ip());
 
-                if (ar.success)
-                   ctx.json(getter.get());
-                else
-                    setCtxError(ctx, ar.error);
+                    if (ar.success)
+                       ctx.json(getter.get());
+                    else
+                        setCtxError(ctx, ar.error);
 
-            } catch (UnrecognizedPropertyException e) {
-                setCtxError(ctx, "Unknown field: '" + e.getPropertyName()+"'.");
+                } catch (UnrecognizedPropertyException e) {
+                    setCtxError(ctx, "Unknown field: '" + e.getPropertyName()+"'.");
 
-            } catch (Exception e) {
-                setCtxError(ctx, e.getMessage());
-            }
-        });
+                } catch (Exception e) {
+                    setCtxError(ctx, e.getMessage());
+                }
+            });
     }
 
     // THESE are templated but Java solves the template types by the parameter list
@@ -121,12 +124,19 @@ public class HTTPServer {
 
     public void enableVideoEndpoints(VideoService videoService) {
 
-        // general motor information
+        // video stream control
         createStatusEndpoint(
                 "/video",
                 videoService::getStatus,
                 videoService::postStatus,
                 VideoStatus.class
+        );
+
+        createStatusEndpoint(
+                "/video/capabilities",
+                videoService::getCapabilities,
+                null,
+                VideoCapabilities.class
         );
     }
 }

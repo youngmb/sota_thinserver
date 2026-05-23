@@ -5,11 +5,6 @@ import java.util.Collections;
 import java.util.Map;
 
 public class VideoStatus {
-
-    public VideoFrame.ImageSize[] supportedSizes = VideoFrame.ImageSize.values();
-
-    public VideoFrame.ImageFormat[] supportedFormats = VideoFrame.ImageFormat.values();
-
     public Boolean enabled = false;
     public Integer streamPort  = null;;
     public String streamIP  = null;;

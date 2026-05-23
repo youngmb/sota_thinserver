@@ -90,6 +90,10 @@ public class VideoService {
         return status;
     }
 
+    public VideoCapabilities getCapabilities() {
+        return new VideoCapabilities();
+    }
+
     public ActionResult postStatus(VideoStatus status, String ip) {
         // unset parameters are null.
         String error = "";
@@ -99,6 +103,7 @@ public class VideoService {
 
                 if (status.streamImageFormat != null) // overwrite if new setting came in
                     this.imageFormat = status.streamImageFormat;
+
                 else if (this.imageFormat == null)  // ensure we have an existing setting or use default
                     this.imageFormat = DEFAULT_IMAGE_FORMAT;
 
