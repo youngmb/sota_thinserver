@@ -46,7 +46,7 @@ public class UdpSender extends UdpStream {
         buffer.put(data);
         buffer.flip();
 
-        DatagramPacket packet = new DatagramPacket(buffer.array(), buffer.position(), target, port);
+        DatagramPacket packet = new DatagramPacket(buffer.array(), buffer.limit(), target, port);
         try {
             socket.send(packet);
         } catch (Exception e) {
