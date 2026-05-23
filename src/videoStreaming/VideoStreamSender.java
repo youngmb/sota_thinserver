@@ -52,11 +52,11 @@ public class VideoStreamSender implements Runnable {
 
             long now = System.nanoTime();
             long elapsedNs = now - lastTimeNs;
-            lastTimeNs = now;
 
             // refill bitrate bucket
-            bucketBits += (bitrate_bps * ( (double)elapsedNs / 1e9));
-            bucketBits = Math.min(bucketBits, bitrate_bps * .25); // don't let the bucket overfill. Max of 250ms to avoid bursts
+            double elapsedS = (double)elapsedNs / 1e9;
+            bucketBits += (bitrate_bps * elapsedS);
+//            bucketBits = Math.min(bucketBits, bitrate_bps * ); // don't let the bucket overfill.
 
             VideoFrame frame = getFrame.get();
             if (frame == null || frame.data == null) continue;
@@ -66,6 +66,7 @@ public class VideoStreamSender implements Runnable {
                 bucketBits -= frameBits;
 
                 putFrame.accept(frame);
+                lastTimeNs = now;  // last time we sent a packet!
 
             } else { // not enough budget -> wait a bit and get a new frame.
                 long sleepNs = (long)(  (frameBits - bucketBits) / bitrate_bps * 1e9 );

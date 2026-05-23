@@ -112,6 +112,9 @@ public class VideoService {
                 else if (this.imageSize == null)
                     this.imageSize = DEFAULT_IMAGE_SIZE;
 
+                if (status.bitrate_cap_kbps != null)
+                    Properties.setProperty(PropertyKey.KEY_VID_BITRATE_CAP, status.bitrate_cap_kbps.toString());
+
                 if (status.streamPort == null) // we need a port
                     error += "Error enabling video, did not receive a port: " +
                             "IP '" + ip + "', port 'null'. ";

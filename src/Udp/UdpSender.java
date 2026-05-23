@@ -5,6 +5,7 @@ import main.PropertyKey;
 
 import java.net.*;
 import java.nio.ByteBuffer;
+import java.util.concurrent.locks.LockSupport;
 
 public class UdpSender extends UdpStream {
 
@@ -58,6 +59,7 @@ public class UdpSender extends UdpStream {
 
     public void send_in_chunks(byte[] data, int dataSize) { // split our data into appropriate size chunks and put in a new header.
         int bytesSent = 0;
+        long delayNs = 200_000; // 0.2ms baseline for pacing UDP packets. about 100Mb (!)
 
         short packets = (short) ((dataSize + MAX_DATA_PAYLOAD - 1) / MAX_DATA_PAYLOAD);
         for (int packet_num = 0; packet_num < packets; packet_num++) {
@@ -75,6 +77,7 @@ public class UdpSender extends UdpStream {
             DatagramPacket packet = new DatagramPacket(buffer.array(), buffer.limit(), target, port);
             try {
                 socket.send(packet);
+                LockSupport.parkNanos(delayNs);
             } catch (Exception e) {
                 System.err.println("Err sending datagram: ");
                 e.printStackTrace();
