@@ -59,7 +59,7 @@ public class UdpSender extends UdpStream {
 
     public void send_in_chunks(byte[] data, int dataSize) { // split our data into appropriate size chunks and put in a new header.
         int bytesSent = 0;
-        long delayNs = 200_000; // 0.2ms baseline for pacing UDP packets. about 100Mb (!)
+        long delayNs = 100_000; // 0.1ms baseline for pacing UDP packets. >100Mb (!)
 
         short packets = (short) ((dataSize + MAX_DATA_PAYLOAD - 1) / MAX_DATA_PAYLOAD);
         for (int packet_num = 0; packet_num < packets; packet_num++) {
