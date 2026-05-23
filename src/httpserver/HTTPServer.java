@@ -68,6 +68,9 @@ public class HTTPServer {
         if (setter != null)
             app.post(path, ctx -> {
                 try {
+//                    String raw = ctx.body();
+//                    System.out.println("RAW JSON: " + raw);
+
                     postT req = mapper.readValue(ctx.body(), postType);
                     ActionResult ar = setter.apply(req, ctx.ip());
 

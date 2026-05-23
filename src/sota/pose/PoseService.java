@@ -81,11 +81,13 @@ public class PoseService {
         CRobotPose pose = new CRobotPose();
 
         // set LEDs
-        Map<Byte, Short> LEDMap = new HashMap<>();
-        for (PoseStatus.LEDStatus ledEntry: command.LEDStatus)
-            if (ledEntry.led_id != null && ledEntry.color != null)  //TODO: consider if we should put err message response here
-                LEDHelp.setLED(LEDMap, ledEntry.led_id, ledEntry.color);
-        pose.SetLed(LEDMap);
+        if (!command.LEDStatus.isEmpty()) {
+            Map<Byte, Short> LEDMap = new HashMap<>();
+            for (PoseStatus.LEDStatus ledEntry : command.LEDStatus)
+                if (ledEntry.led_id != null && ledEntry.color != null)  //TODO: consider if we should put err message response here
+                    LEDHelp.setLED(LEDMap, ledEntry.led_id, ledEntry.color);
+            pose.SetLed(LEDMap);
+        }
 
         // set direct motor positions
         if (!command.servoStatus.isEmpty()) { // only if we have motor commands
@@ -103,12 +105,14 @@ public class PoseService {
             pose.SetPose(poseMap);
 
         }  else { // only check IK if we didn't have direct motor commands. they conflict
-            // set motors using IK to solve for given endpoints
-            RealVector theta = null;
-            for (PoseStatus.EndpointStatus endpoint: command.endpointStatus)
-                theta = sota.solveIK(endpoint.endpoint_id, endpoint.position, theta);
+            if (!command.endpointStatus.isEmpty()) {
+                // set motors using IK to solve for given endpoints
+                RealVector theta = null;
+                for (PoseStatus.EndpointStatus endpoint : command.endpointStatus)
+                    theta = sota.solveIK(endpoint.endpoint_id, endpoint.position, theta);
 
-            pose.SetPose( sota.makePose(theta).getPose());
+                pose.SetPose(sota.makePose(theta).getPose());
+            }
         }
         
         if (command.command == null) command.command = PoseCommand.CommandType.DEFAULT_COMMAND;
