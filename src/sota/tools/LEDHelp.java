@@ -36,15 +36,18 @@ public class LEDHelp {
         }
     }
 
-    public static Color getLEDColor(Map<Byte, Short> LEDData, LEDs led) {
-        if (led.count == 1) { // monochrome
-            Short c = LEDData.get(led.index);
+    public static Color getLEDColor(Map<Byte, Short> LEDData, LEDs LED) {
+        boolean flipGreen = LED == LEDs.POWER; // special case for power button
+
+        if (LED.count == 1) { // monochrome
+            Short c = LEDData.get(LED.index);
             return new Color(c, c, c);
 
-        } else if (led.count == 3) {
-            Short r = LEDData.get(led.index);
-            Short g = LEDData.get((byte)(led.index+1));
-            Short b = LEDData.get((byte)(led.index+1));
+        } else if (LED.count == 3) {
+            Short r = LEDData.get(LED.index);
+            Short g = LEDData.get((byte)(LED.index+1));
+            if (flipGreen) g = (short)(255-g);
+            Short b = LEDData.get((byte)(LED.index+2));
             return new Color(r, g, b);
         }
 
