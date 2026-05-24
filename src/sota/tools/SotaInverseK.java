@@ -9,8 +9,8 @@ import org.apache.commons.math3.linear.RealVector;
 import sota.tools.Frames.FrameKeys;
 
 public class SotaInverseK {
-    private static double NUMERICAL_DELTA_rad = 1e-10;
-    private static double DISTANCE_THRESH = 1e-3; // 1mm
+    private static final double NUMERICAL_DELTA_rad = 1e-10;
+    private static final double DISTANCE_THRESH = 1e-3; // 1mm
 
     public enum JType {  // We separate the jacobians into origin and rotation components to simplify the problem
         O, // origin
@@ -70,8 +70,20 @@ public class SotaInverseK {
         RealMatrix frame = frames.get(frameType);
         return outputType == JType.O ? MatrixHelp.getTrans(frame).getSubVector(0, 3) : MatrixHelp.getZYXRot_vec(frame);
     }
+
     // solves for the target pose on the given frame and type, starting at the current angle configuration.
-    static public RealVector solve(FrameKeys frameType, JType jtype, RealVector targetPose, RealVector curMotorAngles) {
+    // updated with two tuning parameters to keep the search local and avoid huge jumps:
+    // -  alpha is learning parameter, scales the output from the IK each turn. 0.1 alpha is reasonable
+    // - maxAngleStep is how much we let an angle move each step. 3 degrees / 0.05 radians is reasonable
+    static public RealVector solve(FrameKeys frameType, JType jtype,
+                                   RealVector targetPose, RealVector curMotorAngles,
+                                   ServoMapper mapper) {
+        return solve(frameType, jtype, targetPose, curMotorAngles, mapper, 0.1, 0.05);
+    }
+    static public RealVector solve(FrameKeys frameType, JType jtype,
+                                   RealVector targetPose, RealVector curMotorAngles,
+                                   ServoMapper mapper,
+                                   double alpha, double maxAngleStep) {
         double error = Double.MAX_VALUE;
         RealVector theta = curMotorAngles.copy();
         int tries = 0;
@@ -93,11 +105,23 @@ public class SotaInverseK {
  
             SotaInverseK IK = new SotaInverseK(theta, frameType);  // resolve IK at updated theta
             RealVector deltaTheta = IK.Jinv[jtype.ordinal()].get(frameType).operate(errorVec); // update target with jacobian
-            for (int j = 0; j < frameType.motorIndices.length; j++)
-                theta.addToEntry(frameType.motorIndices[j], deltaTheta.getEntry(j));
+            deltaTheta.mapMultiply(alpha);  // learning parameter
 
+            for (int j = 0; j < frameType.motorIndices.length; j++) {
+                Byte motorIndex = frameType.motorIndices[j];
+                Byte motorID = frameType.motorIDs[j];
+                double delta = clamp(deltaTheta.getEntry(j), -maxAngleStep, maxAngleStep);  // clamp to local movement
+
+                double newValue = theta.getEntry(motorIndex) + deltaTheta.getEntry(j);
+                newValue = clamp(newValue, mapper.getMinRad(motorID), mapper.getMaxRad(motorID) );  // clamp to motor capability
+//                theta.setEntry(motorIndex, newValue);
+
+                  theta.setEntry(motorIndex, newValue);
+//                  theta.addToEntry(frameType.motorIndices[j], deltaTheta.getEntry(j));
+            }
             tries++;
         }
         return solution;
-    }   
+    }
+    public static double clamp(double value, double min, double max) {return Math.max(min, Math.min(max, value));}
 }

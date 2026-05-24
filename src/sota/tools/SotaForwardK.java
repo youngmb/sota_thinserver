@@ -25,7 +25,7 @@ public class SotaForwardK {
         RealMatrix _headpitch_to_headroll 	= MatrixHelp.T(MatrixHelp.rotX(angles.getEntry(ServoMapper.IDtoIndex.get(CSotaMotion.SV_HEAD_P))), 		0, 0, 0);
         RealMatrix _head_to_headpitch 		= MatrixUtils.createRealIdentityMatrix(4); 		// head_to_headpitch - no change since the headpitch is the actual head.
         RealMatrix _r_shoulder_to_body 		= MatrixHelp.T(MatrixHelp.rotX(angles.getEntry(ServoMapper.IDtoIndex.get(CSotaMotion.SV_R_SHOULDER))),	 -.039, 0, .1415);
-        RealMatrix _l_shoulder_to_body 		= MatrixHelp.T(MatrixHelp.rotX(angles.getEntry(ServoMapper.IDtoIndex.get(CSotaMotion.SV_L_SHOULDER))), 	.039, 0, .1415);
+        RealMatrix _l_shoulder_to_body 		= MatrixHelp.T(MatrixHelp.rotX(-angles.getEntry(ServoMapper.IDtoIndex.get(CSotaMotion.SV_L_SHOULDER))), 	.039, 0, .1415);
         RealMatrix _r_elbow_to_shoulder 	= MatrixHelp.T(MatrixHelp.rotRodrigues(-0.6258053, .329192519, 0.707106769,  angles.getEntry(ServoMapper.IDtoIndex.get(CSotaMotion.SV_R_ELBOW))),
                                              -.0225, -.03897, 0);
         RealMatrix _l_elbow_to_shoulder		= MatrixHelp.T(MatrixHelp.rotRodrigues(0.6258053, .329192519, 0.707106769, angles.getEntry(ServoMapper.IDtoIndex.get(CSotaMotion.SV_L_ELBOW))),

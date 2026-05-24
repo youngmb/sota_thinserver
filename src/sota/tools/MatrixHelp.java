@@ -113,20 +113,52 @@ public class MatrixHelp {  // creates homogeneous rotation matrices
     // A much faster solution is to use the Moore-Penrose Pseudo Inverse. However, it has more 
     // constraints and will not be always stable so this is simpler and safer for now.
     //  for more reading and details, see: https://robotics.caltech.edu/~jwb/courses/ME115/handouts/pseudo.pdf
-    public static RealMatrix pseudoInverse(RealMatrix M) {  // calculate pseudoinverse based on SVD
+    //  - updatd to add damping, Levenberg-Marquard
+    //    - lambda is damping parameter. range 0 - no damping, --- 0.1 end of regular range. 0.3 massive damping, start with 0.03
+//
+//    public static RealMatrix pseudoInverse(RealMatrix M) { return pseudoInverse(M, 0.03); } // calculate pseudoinverse based on SVD
+//         public static RealMatrix pseudoInverse(RealMatrix M, double lambda) {
+//        SingularValueDecomposition svd = new SingularValueDecomposition(M);
+//        RealMatrix U = svd.getU();
+//        RealMatrix S = svd.getS();
+//        RealMatrix V = svd.getV();
+//
+//        for (int i = 0; i < S.getRowDimension(); i++) {
+//            double entry = S.getEntry(i, i);
+//            if ( entry > 1e-10) { // Avoid division by zero for small numbers
+//                S.setEntry(i, i, 1.0 / entry);
+//            }
+//        }
+//        // pseudoinverse: V * S+ * Ut
+//        return V.multiply(S).multiply(U.transpose());
+//    }
+
+
+    public static RealMatrix pseudoInverse(RealMatrix M) { return pseudoInverse(M, 0.03); } // calculate pseudoinverse based on SVD
+    public static RealMatrix pseudoInverse(RealMatrix M, double lambda) {
         SingularValueDecomposition svd = new SingularValueDecomposition(M);
         RealMatrix U = svd.getU();
         RealMatrix S = svd.getS();
         RealMatrix V = svd.getV();
 
+        RealMatrix Sd = MatrixUtils.createRealMatrix(
+                        S.getColumnDimension(),
+                        S.getRowDimension());
+
         for (int i = 0; i < S.getRowDimension(); i++) {
-            double entry = S.getEntry(i, i);
-            if ( entry > 1e-10)  // Avoid division by zero for small numbers
-                S.setEntry(i, i, 1.0 / entry);
+            double sigma = S.getEntry(i, i);
+            if (sigma < 1e-6) { // don't divide small numbers, avoid
+                Sd.setEntry(i, i, 0);
+                continue;
+            }
+            double damped = sigma / (sigma * sigma + lambda * lambda);
+            Sd.setEntry(i, i, damped);
         }
+
         // pseudoinverse: V * S+ * Ut
-        return V.multiply(S).multiply(U.transpose());
+        return V.multiply(Sd).multiply(U.transpose());
     }
+
 
 
     static public void printMatrix(RealMatrix M, int spacing, int precision) { printMatrix(null, M, spacing, precision); }

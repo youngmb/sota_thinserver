@@ -48,7 +48,7 @@ public class ServoMapper implements Serializable {
         this._motorRanges_rad = new TreeMap<Byte, double[]>() {{   // lower and upper radian range
             put(CSotaMotion.SV_BODY_Y, new double[]{-1.077363736, 1.077363736} );
             put(CSotaMotion.SV_L_ELBOW, new double[]{-1.745329252, 1.221730476} );
-            put(CSotaMotion.SV_L_SHOULDER, new double[]{2.617993878, -1.745329252});
+            put(CSotaMotion.SV_L_SHOULDER, new double[]{-2.617993878, 1.745329252});
             put(CSotaMotion.SV_R_ELBOW, new double[]{-1.221730476, 1.745329252});
             put(CSotaMotion.SV_R_SHOULDER, new double[]{-1.745329252, 2.617993878});
             put(CSotaMotion.SV_HEAD_Y, new double[]{-1.495996502, 1.495996502});

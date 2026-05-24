@@ -18,7 +18,6 @@ public class ServoIKTest {
 	final boolean DEBUG_PRINT = false; // turn on to get debug output
 
 	// private variables
-	CRobotPose _sotaPose = new CRobotPose();
 	CRobotMem _sotaMem = new CRobotMem();
 	CSotaMotion _sotaMotion = new CSotaMotion(_sotaMem);
 
@@ -79,9 +78,9 @@ public class ServoIKTest {
 			double[] head = 	new double[]{headCenter[0]	+ Math.sin(h_angle), headCenter[1]+(h_angle*3)%1.5, headCenter[2]+Math.sin(h_angle)};
 
 			// do IK to solve for motor positions, do incrementally
-			RealVector theta = SotaInverseK.solve(FrameKeys.L_HAND, JType.O, MatrixUtils.createRealVector(left), currentAngles);
-			theta = SotaInverseK.solve(FrameKeys.R_HAND, JType.O, MatrixUtils.createRealVector(right), theta);
-			theta = SotaInverseK.solve(FrameKeys.HEAD, JType.R, MatrixUtils.createRealVector(head), theta); ;
+			RealVector theta = SotaInverseK.solve(FrameKeys.L_HAND, JType.O, MatrixUtils.createRealVector(left), currentAngles, ranges);
+			theta = SotaInverseK.solve(FrameKeys.R_HAND, JType.O, MatrixUtils.createRealVector(right), theta, ranges);
+			theta = SotaInverseK.solve(FrameKeys.HEAD, JType.R, MatrixUtils.createRealVector(head), theta, ranges); ;
 
 			pose = ranges.makePose( ranges.radToPos(theta)  );
 

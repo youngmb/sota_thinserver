@@ -102,7 +102,8 @@ public class SotaConnector implements Runnable {
         if (startPosition == null) // if no start position given, start from current robot position
             startPosition = MatrixUtils.createRealVector(servoMapper.extractAngles( sotaMotion.getReadPose() ));
 
-        return SotaInverseK.solve(Frames.FrameKeys.fromLabel(endpoint_id), SotaInverseK.JType.O, MatrixUtils.createRealVector(position), startPosition);
+        return SotaInverseK.solve(Frames.FrameKeys.fromLabel(endpoint_id), SotaInverseK.JType.O,
+                MatrixUtils.createRealVector(position), startPosition, servoMapper);
     }
 
     public CRobotPose getTargetPose() { return sotaMotion.getTargetPose();}

@@ -5,16 +5,21 @@ import static sota.tools.ServoMapper.IDtoIndex;
 
 public class Frames {
     public enum FrameKeys{
-        L_HAND("leftHand", IDtoIndex.get(CSotaMotion.SV_BODY_Y), IDtoIndex.get(CSotaMotion.SV_L_SHOULDER), IDtoIndex.get(CSotaMotion.SV_L_ELBOW)),
-        R_HAND("rightHand", IDtoIndex.get(CSotaMotion.SV_BODY_Y), IDtoIndex.get(CSotaMotion.SV_R_SHOULDER), IDtoIndex.get(CSotaMotion.SV_R_ELBOW)),
-        HEAD("head", IDtoIndex.get(CSotaMotion.SV_BODY_Y), IDtoIndex.get(CSotaMotion.SV_HEAD_Y),
-             IDtoIndex.get(CSotaMotion.SV_HEAD_P), IDtoIndex.get(CSotaMotion.SV_HEAD_R));
-                
-        public final int[] motorIndices;
+
+        L_HAND("leftHand", CSotaMotion.SV_BODY_Y, CSotaMotion.SV_L_SHOULDER, CSotaMotion.SV_L_ELBOW),
+        R_HAND("rightHand", CSotaMotion.SV_BODY_Y, CSotaMotion.SV_R_SHOULDER, CSotaMotion.SV_R_ELBOW),
+        HEAD("head", CSotaMotion.SV_BODY_Y, CSotaMotion.SV_HEAD_Y, CSotaMotion.SV_HEAD_P, CSotaMotion.SV_HEAD_R);
+
+        public final Byte[] motorIndices;
+        public final Byte[] motorIDs;
         public final String label;
 
-        FrameKeys(String label, int... motorIndices){
-            this.motorIndices = motorIndices;
+        FrameKeys(String label, Byte... motorIDs){
+            this.motorIDs = motorIDs;
+            this.motorIndices = new Byte[motorIDs.length];
+            for (int i=0; i<motorIDs.length; i++) {
+                this.motorIndices[i] = IDtoIndex.get(motorIDs[i]);
+            }
             this.label = label;
         }
 
