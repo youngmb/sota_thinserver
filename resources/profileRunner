@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+##############CHAT GPT GENERATED
+set -e
+
+DEBUG_PORT=5005
+SUSPEND="n"
+
+usage() {
+  echo "Usage: $0 [-s] <jar-file>"
+  echo
+  echo "  -s    Suspend JVM until debugger attaches"
+   (return 0 2>/dev/null) && return 1 || exit 1
+}
+
+while getopts ":s" opt; do
+  case "$opt" in
+    s)
+      SUSPEND="y"
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+JAR_FILE="$1"
+
+if [[ -z "$JAR_FILE" ]]; then
+  usage
+fi
+
+if [[ ! -f "$JAR_FILE" ]]; then
+  echo "Error: JAR file not found: $JAR_FILE"
+   (return 0 2>/dev/null) && return 1 || exit 1
+fi
+
+exec java \
+  -agentlib:jdwp=transport=dt_socket,server=y,suspend=${SUSPEND},address=${DEBUG_PORT} \
+  -XX:+UnlockDiagnosticVMOptions \
+  -XX:+DebugNonSafepoints \
+  -XX:+UnlockCommercialFeatures \
+  -jar "$JAR_FILE"

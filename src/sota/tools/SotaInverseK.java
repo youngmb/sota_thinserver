@@ -10,7 +10,7 @@ import sota.tools.Frames.FrameKeys;
 
 public class SotaInverseK {
     private static final double NUMERICAL_DELTA_rad = 1e-10;
-    private static final double DISTANCE_THRESH = 1e-3; // 1mm
+    private static final double DISTANCE_THRESH = 2e-3; // 2mm
 
     public enum JType {  // We separate the jacobians into origin and rotation components to simplify the problem
         O, // origin
@@ -92,7 +92,7 @@ public class SotaInverseK {
         RealVector solution = theta;
         RealVector simEndPose = targetPose;
 
-        while (error > DISTANCE_THRESH && tries < 20) {
+        while (error > DISTANCE_THRESH && tries < 25) {
             SotaForwardK FK = new SotaForwardK(theta);
             simEndPose = getFKOutput(FK.frames, frameType, jtype); // update end pos with new info.
             

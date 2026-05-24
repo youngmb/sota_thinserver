@@ -1,3 +1,22 @@
+############### Java debugging
+run the provided profileRunner script, then
+
+
+jps -l to get the PID and replace the number below
+
+jcmd 21388 JFR.start \
+    name=robot \
+    duration=300s \
+    filename=/tmp/robot.jfr \
+    settings=profile
+
+
+
+
+
+
+
+##################### REST system test
 #  These can be pasted into the command line to test different things.
 
 

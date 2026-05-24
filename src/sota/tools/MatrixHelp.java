@@ -3,10 +3,7 @@ package sota.tools;
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.RotationConvention;
 import org.apache.commons.math3.geometry.euclidean.threed.RotationOrder;
-import org.apache.commons.math3.linear.MatrixUtils;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
-import org.apache.commons.math3.linear.SingularValueDecomposition;
+import org.apache.commons.math3.linear.*;
 
 public class MatrixHelp {  // creates homogeneous rotation matrices
     
@@ -40,14 +37,27 @@ public class MatrixHelp {  // creates homogeneous rotation matrices
         return MatrixUtils.createRealMatrix(data);
     }
 
+    ///  Profiler showed churn here in making this every time so optimized
     public static RealMatrix trans(double tx, double ty, double tz) { // returns a homogenous translation matrix
-        double[][] data = {
-            {1, 0, 0, tx},
-            {0, 1, 0, ty},
-            {0, 0, 1, tz},
-            {0, 0, 0, 1}
-        };
-        return MatrixUtils.createRealMatrix(data);
+//        double[][] data = {
+//            {1, 0, 0, tx},
+//            {0, 1, 0, ty},
+//            {0, 0, 1, tz},
+//            {0, 0, 0, 1}
+//        };
+//        return MatrixUtils.createRealMatrix(data);
+        double[][] d = new double[4][4];
+
+        d[0][0] = 1.0;
+        d[1][1] = 1.0;
+        d[2][2] = 1.0;
+        d[3][3] = 1.0;
+
+        d[0][3] = tx;
+        d[1][3] = ty;
+        d[2][3] = tz;
+
+        return new Array2DRowRealMatrix(d, false);
     }
 
     public static RealMatrix trans(RealVector t) { // a 4 translation vector. assume w/normalized.
@@ -115,24 +125,6 @@ public class MatrixHelp {  // creates homogeneous rotation matrices
     //  for more reading and details, see: https://robotics.caltech.edu/~jwb/courses/ME115/handouts/pseudo.pdf
     //  - updatd to add damping, Levenberg-Marquard
     //    - lambda is damping parameter. range 0 - no damping, --- 0.1 end of regular range. 0.3 massive damping, start with 0.03
-//
-//    public static RealMatrix pseudoInverse(RealMatrix M) { return pseudoInverse(M, 0.03); } // calculate pseudoinverse based on SVD
-//         public static RealMatrix pseudoInverse(RealMatrix M, double lambda) {
-//        SingularValueDecomposition svd = new SingularValueDecomposition(M);
-//        RealMatrix U = svd.getU();
-//        RealMatrix S = svd.getS();
-//        RealMatrix V = svd.getV();
-//
-//        for (int i = 0; i < S.getRowDimension(); i++) {
-//            double entry = S.getEntry(i, i);
-//            if ( entry > 1e-10) { // Avoid division by zero for small numbers
-//                S.setEntry(i, i, 1.0 / entry);
-//            }
-//        }
-//        // pseudoinverse: V * S+ * Ut
-//        return V.multiply(S).multiply(U.transpose());
-//    }
-
 
     public static RealMatrix pseudoInverse(RealMatrix M) { return pseudoInverse(M, 0.03); } // calculate pseudoinverse based on SVD
     public static RealMatrix pseudoInverse(RealMatrix M, double lambda) {
