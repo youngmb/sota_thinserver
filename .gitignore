@@ -1,7 +1,8 @@
 # Compiled class file and jars
 *.class
-./bin/
+build/
 jars/
+lib/
 
 # Log file
 *.log
@@ -25,3 +26,6 @@ replay_pid*
 
 # omitted Sota helper classes for creating pose object files
 src/tools/*
+
+#gradle cache
+.gradle/

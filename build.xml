@@ -5,8 +5,8 @@
 
         <!--ip -->
         <!--- For Sota -->
-<!--        <property name="scp.server" value="10.151.63.71"/>-->
-        <property name="scp.server" value="192.168.0.23"/>
+        <property name="scp.server" value="10.151.63.71"/>
+<!--        <property name="scp.server" value="192.168.0.23"/>-->
          
         <!--scp credentials -->
         <property name="scp.edison.user" value="root"  />
@@ -22,7 +22,7 @@
         <property name="jars.dir" value="jars"/>
         <property name="resources.dir" value="resources"/>
         <property name="javadoc.dir" value="docs"/>
-        
+
         <property name="remotelib.dir" value="/home/vstone/lib"/>
 
         <!--runnable classpath. Update if you need new libraries -->
@@ -97,6 +97,13 @@
                         <param name="jar.class" value="sota.supportPrograms.ServoRangeTest" />
                         <param name="jar.name" value="ServoRangeTest.jar" />
                 </antcall>
+
+                <antcall target="__make_jar">
+                        <param name="jar.class" value="sota.supportPrograms.CameraSaveTest" />
+                        <param name="jar.name" value="CameraSaveTest.jar" />
+                </antcall>
+
+
 <!--               <antcall target="__make_jar">-->
 <!--                        <param name="jar.class" value="old.test.TestSotaDialogController" />-->
 <!--                        <param name="jar.name" value="TestSotaDialogController.jar" />-->
@@ -127,7 +134,7 @@
                 </scp>
         </target>
 
-        <target name="upload_resources_all">
+        <target name="upload_resources">
                 <!-- make the folder if it doesn't exist -->
                 <sshexec
                         host="${scp.server}"
@@ -141,33 +148,6 @@
                 </scp>
         </target>
 
-        <target name="upload_resources_utterances">
-                <!-- make the folder if it doesn't exist -->
-                <sshexec
-                        host="${scp.server}"
-                        username="${scp.edison.user}"
-                        password="${scp.edison.pass}"
-                        command="mkdir -p ${sota.basedir}/${resources.dir}/utterances"
-                        trust="true" />
-    
-                <scp todir="${scp.edison.user}:${scp.edison.pass}@${scp.server}:${sota.basedir}/${resources.dir}/utterances" trust="yes" sftp="true" verbose="true" >       
-                        <fileset dir="${resources.dir}/utterances"/>
-                </scp>
-        </target>
-
-        <target name="upload_resources_config">
-                <!-- make the folder if it doesn't exist -->
-                <sshexec
-                        host="${scp.server}"
-                        username="${scp.edison.user}"
-                        password="${scp.edison.pass}"
-                        command="mkdir -p ${sota.basedir}/${resources.dir}/config"
-                        trust="true" />
-    
-                <scp todir="${scp.edison.user}:${scp.edison.pass}@${scp.server}:${sota.basedir}/${resources.dir}/config" trust="yes" sftp="true" verbose="true" >       
-                        <fileset dir="${resources.dir}/config"/>
-                </scp>
-        </target> 
 
         <target name="compile_and_send_jars" depends="compile, make_jars, upload_jars" description="Compile all into Jars and upload">
         </target>
