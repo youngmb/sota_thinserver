@@ -1,9 +1,6 @@
 package main;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 public class Properties {
 
@@ -11,15 +8,30 @@ public class Properties {
     private static final String PROPERTIES_FILE = "sotathinclient.properties";    ///NOTE FRAGILE DEPENDENCY
     private static java.util.Properties sotaProperties = loadProperties();
 
+    private static String findFile() {
+        File f = new File(PROPERTIES_FILE);
+        if (f.exists() && !f.isDirectory())
+            return PROPERTIES_FILE;
+
+        f = new File(FALLBACK_DEFAULT_PROPERTIES_FILE);
+        if (f.exists() && !f.isDirectory())
+            return FALLBACK_DEFAULT_PROPERTIES_FILE;
+
+        System.err.println("Error: cannot find motor ranges mapping file, checked both: \n\t"+PROPERTIES_FILE+"\n\t"+FALLBACK_DEFAULT_PROPERTIES_FILE);
+        return null;
+    }
+
     private static java.util.Properties loadProperties() {
         java.util.Properties prop = null;
 
-        try (InputStream input = new FileInputStream(PROPERTIES_FILE)) {
+        String filename = findFile();
+
+        try (InputStream input = new FileInputStream(filename)) {
             prop = new java.util.Properties();
             prop.load(input);
 
         } catch (FileNotFoundException e) {
-            System.out.println("Sota .properties file not found.. Expecting "+PROPERTIES_FILE);
+            System.out.println("Sota .properties file not found.. Expecting "+filename);
 
         } catch (IOException e) {
             System.out.println("IO Exception.");
