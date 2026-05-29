@@ -61,6 +61,7 @@ dependencies {
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+    options.release = 8
     options.compilerArgs += ['-Xlint:unchecked']   // ignore java 8 warnings. no longer seems to work.
 }
 
