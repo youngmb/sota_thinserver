@@ -12,7 +12,7 @@ import jp.vstone.RobotLib.CSotaMotion;
 public class ServoMapper implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    final public static String FALLBACK_DEFAULT_FILENAME = "../resources/motorranges-default.dat";
+    final public static String FALLBACK_DEFAULT_FILENAME = "/home/root/thinserver/motorranges-default.dat";
     final public static String LOCAL_FILENAME = "./motorranges.dat";
 
     public static TreeMap<Byte, Byte> IDtoIndex = null;

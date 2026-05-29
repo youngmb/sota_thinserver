@@ -37,27 +37,14 @@ fi
 cp ./sota.properties /home/vstone/vstonemagic/app/jar/${JARNAME}
 cp /home/root/play/jars/${JARNAME}.jar /home/vstone/vstonemagic/app/jar/${JARNAME}/
 
-# move the required libraries to the right place
-cp /home/vstone/lib/libpocket* /usr/local/share/OpenCV/java
-
-# shouldn't need to copy these ones, as they are present in /home/vstone/lib and linked with $LD_LIBRARY_PATH env variable (set in ~/.profile)
-# cp /home/vstone/lib/commons* /usr/local/share/OpenCV/java
-# cp /home/vstone/lib/core-2.2.jar /usr/local/share/OpenCV/java
-# cp /home/vstone/lib/gdx* /usr/local/share/OpenCV/java
-# cp /home/vstone/lib/javase-2.2.jar /usr/local/share/OpenCV/java
-# cp /home/vstone/lib/jna-4.1.0.jar /usr/local/share/OpenCV/java
-# cp /home/vstone/lib/sotalib.jar /usr/local/share/OpenCV/java
-# cp /home/vstone/lib/SRClientHelper.jar /usr/local/share/OpenCV/java
-# cp /home/vstone/lib/voice* /usr/local/share/OpenCV/java
 
 # disable the sotaupdate service that's been causing issues
 systemctl disable sotaupdate.service
 
-# set the microphone gain
+# set the microphone gain to a sane level.
 # ---amixer -c 2 cset numid=7 90% - OLD - would do it manually
 # now we install a service to do it on every boot.
 cp alsa-vol.service /lib/systemd/system
 systemctl daemon-reload
 systemctl enable alsa-vol.service
 systemctl start alsa-vol.service
-

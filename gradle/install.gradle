@@ -1,0 +1,149 @@
+group = 'sota'
+version = '1.0'
+
+// ======================
+// Configuration
+
+ext {
+//    scpServer = '10.151.63.71'
+    scpServer = '192.168.0.23'
+
+    scpUser = 'root'
+    scpPass = 'edison00'
+
+    remoteBaseDir = '/home/root/thinserver'
+    remoteLibDir = '/home/vstone/lib'
+    localResourceDir = 'install/resources'
+    localScriptsDir = 'install/scripts'
+
+    localAutorunConfigDir = 'install/autorunConfig'
+    autorunJar='SotaThinServer'   // no extension, the name of the jar file to run on boot
+    autorunAppParentDir = "/home/vstone/vstonemagic/app/jar"
+    autorunAppDir = "${autorunAppParentDir}/${autorunJar}"
+
+    localSoundsDir = "install/sounds"
+    remoteSoundsDir = "/home/vstone/vstonemagic"
+}
+
+// SSH
+remotes {
+    sota {
+        host = scpServer
+        user = scpUser
+        password = scpPass
+        knownHosts = allowAnyHosts
+    }
+}
+
+tasks.register('cleanRemote') {
+    group='sota.install'
+    doLast {
+        ssh.run {
+            session(remotes.sota) {
+                execute "rm -rf ${remoteBaseDir}"
+                execute "rm -rf ${autorunAppDir}"
+                execute "rm -rf ${autorunAppParentDir}/app.*"
+            }
+        }
+    }
+}
+
+tasks.register('sotaSystemSetup') { //misc tasks on the sota system to support smooth operation
+    group='sota.install'
+    doLast {
+        ssh.run {
+            session(remotes.sota) {
+                // this update service breaks the sota
+                execute "systemctl disable sotaupdate.service"
+
+                // install the automatic mic reset to a sane volume service
+                put from: file("${localScriptsDir}/alsa-vol.service"),
+                    into: "/lib/systemd/system"
+                execute "systemctl daemon-reload"
+                execute "systemctl enable alsa-vol.service"
+                execute "systemctl start alsa-vol.service"
+
+                // install the english language pack
+                fileTree(localSoundsDir).visit { details ->
+                    if (!details.directory) {
+                        def remotePath = "${remoteSoundsDir}/${details.relativePath}"
+                        def parent = remotePath.substring(0, remotePath.lastIndexOf('/'))
+
+                        execute "mkdir -p '${parent}'"
+
+                        put from: details.file,
+                                into: remotePath,
+                                overwrite: true
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.register('installJarsToHome') {
+    group='sota.install'
+    dependsOn 'makeJars', 'installLibs'
+
+    doLast {
+        ssh.run {
+            session(remotes.sota) {
+                execute "mkdir -p ${remoteBaseDir}"
+                execute "rm -rf ${remoteBaseDir}/*"
+
+                put from: fileTree("${localJarsDir}").files,
+                        into: "${remoteBaseDir}"
+
+                put from: fileTree(localResourceDir).files,
+                        into: "${remoteBaseDir}",
+                        overwrite: true
+
+            }
+        }
+    }
+}
+
+tasks.register('installLibs') {
+    group='sota.install'
+    dependsOn('stageLibs')
+
+    doLast {
+        ssh.run {
+            session(remotes.sota) {
+                put from: fileTree('lib').files,
+                        into: remoteLibDir
+            }
+        }
+    }
+}
+
+
+tasks.register('installThinclientOnBoot') {
+    group='sota.install'
+    dependsOn 'makeJars', 'installJarsToHome', 'installLibs'
+
+    doLast {
+        ssh.run {
+            session(remotes.sota) {
+
+                // copy the installed jars to the launch folder
+                execute "mkdir -p ${autorunAppDir}"
+
+                put from: fileTree(localJarsDir) { include "${autorunJar}.jar"},
+                        into: "${autorunAppDir}",
+                        overwrite: true
+
+                // copy the app definition files to the Sota
+                put from: fileTree(localAutorunConfigDir) { include 'app.properties*'},
+                        into: "${autorunAppParentDir}",
+                        overwrite: true
+            }
+        }
+    }
+}
+
+// Full deploy
+tasks.register('installAll') {
+    group='sota.install'
+    dependsOn 'installJarsToHome', 'installLibs', 'installThinclientOnBoot', 'sotaSystemSetup'
+}

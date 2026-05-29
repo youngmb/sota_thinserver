@@ -15,20 +15,14 @@ java {
 // Configuration
 
 ext {
-    scpServer = '10.151.63.71'
-    //scpServer = '192.168.0.23'
-
-    scpUser = 'root'
-    scpPass = 'edison00'
-
-    sotaBaseDir = '/home/root/thinserver'
-    remoteLibDir = '/home/vstone/lib'
-
-    localSotaLibDir = '/sotalib'
+    localSotaLibDir = 'install/sotalib'
+    localJarsDir = 'jars'
 
     jarAdditionalClasspath = '. ' +
-            '/usr/local/share/OpenCV/java/opencv-310.jar'
+            '/usr/local/share/OpenCV/java/opencv-310.jar'   // needed for openCV calls
 }
+
+apply from: 'gradle/install.gradle'
 
 
 sourceSets {
@@ -67,20 +61,9 @@ dependencies {
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
-    options.compilerArgs += ['-Xlint:unchecked']
+    options.compilerArgs += ['-Xlint:unchecked']   // ignore java 8 warnings. no longer seems to work.
 }
 
-// ======================
-// SSH configuration
-
-remotes {
-    sota {
-        host = scpServer
-        user = scpUser
-        password = scpPass
-        knownHosts = allowAnyHosts
-    }
-}
 
 // ======================
 // Multiple jar generation
@@ -130,7 +113,7 @@ jarConfigs.each { cfg ->
         dependsOn classes
         archiveFileName = cfg.jarName
 
-        destinationDirectory = file('jars')
+        destinationDirectory = file(localJarsDir)
 
         from sourceSets.main.output
 
@@ -146,110 +129,32 @@ jarConfigs.each { cfg ->
     }
 }
 
-// Aggregate task
-
 tasks.register('makeJars') {
-    group='sota'
+    group='sota.build'
     dependsOn jarConfigs.collect { it.taskName }
 }
+
 
 // ======================
 // Clean
 
 tasks.named('clean', Delete).configure {
-    group = 'sota'
+    group='sota.build'
     description = 'Clean build outputs (custom group)'
 }
 
-tasks.register('cleanRemote') {
-    group='sota'
-    doLast {
-        ssh.run {
-            session(remotes.sota) {
-                execute "rm -rf ${sotaBaseDir}"
-            }
-        }
-    }
-}
-
 // ======================
-// Upload jars
-
-
-tasks.register('uploadJars') {
-    group='sota'
-    dependsOn 'makeJars'
-
-    doLast {
-        ssh.run {
-            session(remotes.sota) {
-                execute "rm -rf ${sotaBaseDir}/jars"
-                execute "mkdir -p ${sotaBaseDir}"
-                put from: file('jars/'),
-                    into: "${sotaBaseDir}"
-            }
-        }
-    }
-}
-
-// ======================
-// Upload libs
+// Stage libs
 
 tasks.register('stageLibs') {
-    group='sota'
+    group='sota.build'
     outputs.dir("/lib")
 
     doLast {
         delete("/lib")
         copy {
-            from configurations.runtimeClasspath
-            from "/${localSotaLibDir}"
+            from configurations.runtimeClasspath  // note that we added the sota jars to the runtimeClasspath
             into "/lib"
         }
     }
-}
-
-tasks.register('uploadLibs') {
-    group='sota'
-
-    doLast {
-        ssh.run {
-            session(remotes.sota) {
-                put from: fileTree('lib').files,
-                    into: remoteLibDir
-            }
-        }
-    }
-}
-
-// ======================
-// Upload resources
-
-tasks.register('uploadResources') {
-    group='sota'
-    doLast {
-
-        ssh.run {
-            session(remotes.sota) {
-                execute "rm -rf ${sotaBaseDir}/resources"
-                execute "mkdir -p ${sotaBaseDir}"
-                put from: file('resources/'),
-                    into: "${sotaBaseDir}",
-                    overwrite: true
-            }
-        }
-    }
-}
-
-// ======================
-// Full deploy
-
-tasks.register('compileAndSendJars') {
-    group='sota'
-    dependsOn 'build', 'makeJars', 'uploadJars'
-}
-
-tasks.register('compileAndSendAll') {
-    group='sota'
-    dependsOn 'build', 'makeJars', 'uploadJars', 'uploadResources', 'uploadLibs'
 }
