@@ -84,9 +84,14 @@ public class SpeakerService {
         if (status.enabled != null && status.enabled != this.isEnabled()) {  // 'enabled' changed
             if (status.enabled) {
 
+                if (status.sampleRate != null) Properties.setProperty(PropertyKey.KEY_SPK_SAMPLE_RATE, status.sampleRate.toString());
+
+                if (status.bufferSize != null) Properties.setProperty(PropertyKey.KEY_SPK_BUFFER_SIZE, status.bufferSize.toString());
+
                 if (status.streamPort == null) // we need a port
                     error += "Error enabling speaker, did not receive a port to listen on: " +
                             "port '" + status.streamPort + "'. ";
+
                 else if (!this.enable(status.streamPort))
                     error += this.getLastError();
 

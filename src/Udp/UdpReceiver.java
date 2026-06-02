@@ -114,7 +114,7 @@ public class UdpReceiver extends UdpStream implements Runnable {
 
     void addToQueue(byte[] data) {
         if (!queue.offer(data)) // non-blocking enqueue but can fail
-            System.err.println("Warning: UDP receive dropped packet due to failure to add to queue");
+            System.err.println("Warning: UDP receive code is dropping packet due to failure to add to queue");
     }
 
     @Override

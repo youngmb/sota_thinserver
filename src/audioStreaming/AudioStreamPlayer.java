@@ -16,12 +16,8 @@ import java.util.concurrent.locks.LockSupport;
  */
 public class AudioStreamPlayer implements Runnable {
 
-    private static final int ioBufferSize = Properties.getPropAsInt(PropertyKey.KEY_SPK_BUFFER_SIZE);
-    private static final AudioFormat audioFormat = new AudioFormat(
-            Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_RATE),
-            Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE),
-            Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS), true,false
-    );
+    private Integer ioBufferSize = null;
+    private Integer ioBufferSize_ms = null;
 
     private final BlockingQueue<byte[]> playbackQueue;
     private Thread workerThread = null;
@@ -36,7 +32,7 @@ public class AudioStreamPlayer implements Runnable {
     }
 
     // open a SourceDataLine to the correct audio device
-    private void openLine() {
+    private void openLine(AudioFormat format) {
         try {
             // we need to iterate through mixers to get the correct one
             // that represents Sota's speaker, which can be ascertained
@@ -46,19 +42,20 @@ public class AudioStreamPlayer implements Runnable {
             for (Mixer.Info mixerInfo : mixerInfos) {
                 if (mixerInfo.getName().contains("hw:2,0")) {
                     Mixer mixer = AudioSystem.getMixer(mixerInfo);
-                    DataLine.Info lineInfo = new DataLine.Info(SourceDataLine.class, audioFormat);
-                    System.out.println("Audio Stream player line supported: " + mixer.isLineSupported(lineInfo));
+                    DataLine.Info lineInfo = new DataLine.Info(SourceDataLine.class, format);
+                    System.out.println("Audio Stream player line supported: " + mixerInfo.getName()+" "+format.toString());
                     SourceDataLine line = (SourceDataLine) mixer.getLine(lineInfo);
-                    line.open(audioFormat);
+                    line.open(format, ioBufferSize);
                     line.start();
                     sourceLine = line;
                     return;
                 }
             }
+            System.out.println("No expected audio stream found, trying default.");
             // otherwise try this as default
-            SourceDataLine line = AudioSystem.getSourceDataLine(audioFormat);
+            SourceDataLine line = AudioSystem.getSourceDataLine(format);
             System.out.println(line.getLineInfo().toString());
-            line.open(audioFormat);
+            line.open(format, ioBufferSize);
             line.start();
             sourceLine = line;
         } catch (LineUnavailableException e) {
@@ -69,87 +66,102 @@ public class AudioStreamPlayer implements Runnable {
     /// ================== speaker draining thread functions
 
     public void start() {
-        openLine();
+        ioBufferSize = Properties.getPropAsInt(PropertyKey.KEY_SPK_BUFFER_SIZE);
+        openLine(
+                new AudioFormat(
+                    Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_RATE),
+                    Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE),
+                    Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS), true,false
+                )
+        );
+        ioBufferSize_ms = (int)
+                ( (double)ioBufferSize
+                / Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS)
+                / (Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE)/8)
+                / Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_RATE)
+                * 1000.0);
+
         workerThread = new Thread(this, "audio stream player thread");
         workerThread.start();
     }
 
     @Override
-//    public void run() {     // Dedicated worker keeps playback off the network IO threads.
-//        running = true;
-//        workerThread = Thread.currentThread();
-//        byte[] data = null;
-//        while (running) {
-////            try {
-////                data = playbackQueue.take();  // block only on empty
-//                data = playbackQueue.poll();
-//                if (data == null)
-//
-////            } catch (InterruptedException e) { // continue gracefully if interrupted
-////                continue;
-////            }
-//
-//            if (data.length == 0) {
-//                System.err.println("AudioPlayback: empty payload ");
-//                return;
-//            }
-//
-//            try {
-//            int written = 0;
-//                while (written < data.length) {  // TODO : probably needs fixing to fix SOTA buffer underflow bug
-//                    int toWrite = Math.min(ioBufferSize, data.length - written);
-//                    sourceLine.write(data, written, toWrite);
-//                    written += toWrite;
-//                }
-//            } catch (Exception e) {  // shouldn't happen
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-
     public void run() {     // Dedicated worker keeps playback off the network IO threads.
-        int frameSize = Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS) * Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE)/8;
-
-        double s_in_buffer =
-                (double) ioBufferSize / frameSize / Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_RATE);
-        long bufferNs = (long)(s_in_buffer * 1_000_000_000L);
-
-        long next = System.nanoTime();
-
         running = true;
         workerThread = Thread.currentThread();
+        byte[] silenceBuffer = new byte[ioBufferSize];
         byte[] data = null;
 
         while (running) {
-            data = playbackQueue.poll();
-
-            if (data != null) // have data
-                writeData(data);
-            else
-                writeData(new byte[ioBufferSize]); // write silence
-
-            if (playbackQueue.size() > Properties.getPropAsInt(PropertyKey.KEY_NET_UDP_WAITBUFFER_SIZE)) { // we're behind
-                data = playbackQueue.poll();
-                while (data !=  null) {
-                    writeData(data);
-                    data = playbackQueue.poll();
-                }
-                next = System.nanoTime();
+            try {
+//                data = playbackQueue.take();  // block only on empty
+                data = playbackQueue.poll(ioBufferSize_ms, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) { // continue gracefully if interrupted
+                continue;
             }
 
-            next += bufferNs;  // wait this much for every frame we receive
-            long sleepNs = next - System.nanoTime();
-            if (sleepNs > 0)
-                LockSupport.parkNanos(sleepNs);
+            if (data == null || data.length == 0) {
+                int silenceLen = Math.min(0, ioBufferSize-sourceLine.available());
+                writeData(silenceBuffer, silenceLen);
+            } else {
+                writeData (data, data.length);
+            }
+
+            // JITTER CONTROL / CATCH-UP:
+            // If the queue is building up, skip (drop) older packets to eliminate latency.
+            // Do NOT try to write them all sequentially, or you will block and freeze!
+            if (playbackQueue.size() > 3) {
+                System.err.println("Audio Lag Detected! Skipping backed-up frames.");
+                while (playbackQueue.size() > 1) {
+                    playbackQueue.poll();
+                }
+            }
         }
     }
 
-    private void writeData(byte[] data) {
+//    public void run() {     // Dedicated worker keeps playback off the network IO threads.
+//        int frameSize = Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS) * Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE)/8;
+//
+//        double s_in_buffer =
+//                (double) ioBufferSize / frameSize / Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_RATE);
+//        long bufferNs = (long)(s_in_buffer * 1_000_000_000L);
+//
+//        long next = System.nanoTime();
+//
+//        running = true;
+//        workerThread = Thread.currentThread();
+//        byte[] data = null;
+//
+//        while (running) {
+//            data = playbackQueue.poll();
+//
+//            if (data != null) // have data
+//                writeData(data);
+//            else
+//                writeData(new byte[ioBufferSize]); // write silence
+//
+//            if (playbackQueue.size() > Properties.getPropAsInt(PropertyKey.KEY_NET_UDP_WAITBUFFER_SIZE)) { // we're behind
+//                data = playbackQueue.poll();
+//                while (data !=  null) {
+//                    writeData(data);
+//                    data = playbackQueue.poll();
+//                }
+//                next = System.nanoTime();
+//            }
+//
+//            next += bufferNs;  // wait this much for every frame we receive
+//            long sleepNs = next - System.nanoTime();
+//            if (sleepNs > 0)
+//                LockSupport.parkNanos(sleepNs);
+//        }
+//    }
+
+    private void writeData(byte[] data, int datalen) {
         try {
             int written = 0;
             // avoid overfilling the card buffer
-            while (written < data.length) {  // TODO : probably needs fixing to fix SOTA buffer underflow bug
-                int toWrite = Math.min(ioBufferSize, data.length - written);
+            while (written < datalen) {  // TODO : probably needs fixing to fix SOTA buffer underflow bug
+                int toWrite = Math.min(ioBufferSize, datalen - written);
                 int actuallyWritten = sourceLine.write(data, written, toWrite);
                 written += actuallyWritten;
             }

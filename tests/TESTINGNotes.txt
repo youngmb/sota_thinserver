@@ -1,4 +1,4 @@
-############### Java debugging
+############### Java profiling
 run the provided profileRunner script, then
 
 
@@ -9,8 +9,6 @@ jcmd 21388 JFR.start \
     duration=300s \
     filename=/tmp/robot.jfr \
     settings=profile
-
-
 
 
 
@@ -101,3 +99,11 @@ curl -X POST http://localhost:8080/pose/jointspace -H "Content-Type: application
 
 
 curl -X POST http://localhost:8080/pose/system -H "Content-Type: application/json" -d '{"servosEnabled":"false"}'
+
+curl -X POST http://localhost:8080/speaker -H "Content-Type: application/json" -d '{"enabled":true,"volume":-1,"streamPort":52002,"streamIP":null,"bufferSize":256,"sampleRate":22500,"sampleSize_bits":16,"channels":1}'
+
+curl http://localhost:8080/speaker
+
+
+curl -X POST http://localhost:8080/speaker -H "Content-Type: application/json" -d '{"enabled":false}'
+
