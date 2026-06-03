@@ -16,6 +16,8 @@ import java.util.concurrent.locks.LockSupport;
  */
 public class AudioStreamPlayer implements Runnable {
 
+    public final static int SYSTEM_BUFFER_SIZE = 112; // This is the system read boundary. Java 8 bug, match a multiple of this.
+
     private Integer ioBufferSize = null;
     private Integer ioBufferSize_ms = null;
 
@@ -40,7 +42,7 @@ public class AudioStreamPlayer implements Runnable {
             // pactl info | grep "Default Sink"
             Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
             for (Mixer.Info mixerInfo : mixerInfos) {
-                if (mixerInfo.getName().contains("hw:2,0")) {
+                if (mixerInfo.getName().contains("plughw:2,0")) {
                     Mixer mixer = AudioSystem.getMixer(mixerInfo);
                     DataLine.Info lineInfo = new DataLine.Info(SourceDataLine.class, format);
                     System.out.println("Audio Stream player line supported: " + mixerInfo.getName()+" "+format.toString());
@@ -74,50 +76,82 @@ public class AudioStreamPlayer implements Runnable {
                     Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS), true,false
                 )
         );
-        ioBufferSize_ms = (int)
-                ( (double)ioBufferSize
-                / Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS)
-                / (Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE)/8)
-                / Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_RATE)
-                * 1000.0);
+//        ioBufferSize_ms = (int)(Math.ceil
+//                ( (double)ioBufferSize
+//                / Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS)
+//                / (Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE)/8)
+//                / Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_RATE)
+//                * 1000.0)
+//        );
 
         workerThread = new Thread(this, "audio stream player thread");
         workerThread.start();
     }
 
+
     @Override
     public void run() {     // Dedicated worker keeps playback off the network IO threads.
         running = true;
-        workerThread = Thread.currentThread();
+
         byte[] silenceBuffer = new byte[ioBufferSize];
-        byte[] data = null;
 
         while (running) {
-            try {
-//                data = playbackQueue.take();  // block only on empty
-                data = playbackQueue.poll(ioBufferSize_ms, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) { // continue gracefully if interrupted
-                continue;
-            }
+            byte[] data = playbackQueue.poll();
 
             if (data == null || data.length == 0) {
-                int silenceLen = Math.min(0, ioBufferSize-sourceLine.available());
-                writeData(silenceBuffer, silenceLen);
+                System.out.println("Starvation: write silence");
+                    writeData(silenceBuffer, ioBufferSize);
             } else {
+                System.out.println("write data");
                 writeData (data, data.length);
-            }
-
-            // JITTER CONTROL / CATCH-UP:
-            // If the queue is building up, skip (drop) older packets to eliminate latency.
-            // Do NOT try to write them all sequentially, or you will block and freeze!
-            if (playbackQueue.size() > 3) {
-                System.err.println("Audio Lag Detected! Skipping backed-up frames.");
-                while (playbackQueue.size() > 1) {
-                    playbackQueue.poll();
-                }
             }
         }
     }
+
+
+//    @Override
+//    public void run() {     // Dedicated worker keeps playback off the network IO threads.
+//        running = true;
+//        workerThread = Thread.currentThread();
+//        byte[] silenceBuffer = new byte[ioBufferSize];
+//        byte[] data = null;
+//
+//        while (running) {
+//            try {
+////                data = playbackQueue.take();  // block only on empty
+//                data = playbackQueue.poll(1, TimeUnit.MILLISECONDS);
+//            } catch (InterruptedException e) { // continue gracefully if interrupted
+//                continue;
+//            }
+//            int qs = playbackQueue.size();
+//            if (qs > 1) System.err.println("Queue depth: " + qs);
+////            if (data == null || data.length == 0) {
+////                int silenceLen = Math.min(0, ioBufferSize-sourceLine.available());
+////                writeData(silenceBuffer, silenceLen);
+////            } else {
+////                writeData (data, data.length);
+////            }
+//            if (data == null || data.length == 0) {
+//                int avail = sourceLine.available();
+//                System.err.println("Queue empty: sdl.available()=" + avail + "/" + ioBufferSize);
+//                if (sourceLine.available() == ioBufferSize) {
+//                    // Hardware buffer fully drained - now we need silence
+//                    writeData(silenceBuffer, ioBufferSize);
+//                }
+//            } else {
+//                writeData (data, data.length);
+//            }
+//            // JITTER CONTROL / CATCH-UP:
+//            // If the queue is building up, skip (drop) older packets to eliminate latency.
+//            // Do NOT try to write them all sequentially, or you will block and freeze!
+//            if (playbackQueue.size() > 10) {
+//                System.err.println("Audio Lag Detected! Skipping backed-up frames.");
+//                while (playbackQueue.size() > 1) {
+//                    playbackQueue.poll();
+//                }
+//            }
+//        }
+//    }
 
 //    public void run() {     // Dedicated worker keeps playback off the network IO threads.
 //        int frameSize = Properties.getPropAsInt(PropertyKey.KEY_SPK_CHANNELS) * Properties.getPropAsInt(PropertyKey.KEY_SPK_SAMPLE_SIZE)/8;
@@ -163,6 +197,7 @@ public class AudioStreamPlayer implements Runnable {
             while (written < datalen) {  // TODO : probably needs fixing to fix SOTA buffer underflow bug
                 int toWrite = Math.min(ioBufferSize, datalen - written);
                 int actuallyWritten = sourceLine.write(data, written, toWrite);
+//                System.out.println("actually written "+actuallyWritten);
                 written += actuallyWritten;
             }
         } catch (Exception e) {  // shouldn't happen

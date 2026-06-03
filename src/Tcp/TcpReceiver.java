@@ -1,4 +1,4 @@
-package Udp;
+package Tcp;
 
 import main.Properties;
 import main.PropertyKey;
@@ -9,7 +9,7 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
 
-public class UdpReceiver extends UdpStream implements Runnable {
+public class TcpReceiver extends TcpStream implements Runnable {
 
     private final BlockingQueue<byte[]> queue;
     private Thread workerThread = null;
@@ -25,7 +25,7 @@ public class UdpReceiver extends UdpStream implements Runnable {
     private int dataWaiting = 0; // number of packets saved
     private int expectedBufferSize = 0;
 
-    public UdpReceiver(int port,
+    public TcpReceiver(int port,
                        BlockingQueue<byte[]> queue,
                        int expectedBufferSize) // expected size of incoming data
             throws SocketException {
@@ -119,7 +119,7 @@ public class UdpReceiver extends UdpStream implements Runnable {
 
     @Override
     public void run() {
-        byte[] buffer = new byte[expectedBufferSize+SEQUENCE_RESERVED_BYTES];
+        byte[] buffer = new byte[expectedBufferSize];
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
         try {
