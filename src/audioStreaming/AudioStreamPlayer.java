@@ -89,6 +89,7 @@ public class AudioStreamPlayer implements Runnable {
 //        );
 
         workerThread = new Thread(this, "audio stream player thread");
+        workerThread.setPriority(Thread.MAX_PRIORITY);
         workerThread.start();
     }
 
@@ -153,32 +154,43 @@ public class AudioStreamPlayer implements Runnable {
         long framesScheduled = 0;
         long framesInBuffer = (ioBufferSize / this.bytesPerFrame);
 
+        int printcounter = 0;
+        boolean doPrint = false;
+
         while (running) {
+            printcounter = (printcounter + 1) % 100;
+            doPrint = (printcounter == 0);
+
 
             // how many frames should have played by now
             long elapsedNs = System.nanoTime() - startNs;
-            long framesPlayed = (long)(elapsedNs / 1_000_000_000.0 * this.sampleRate);
+            long expectedFramesPlayed = (long)(elapsedNs / 1_000_000_000.0 * this.sampleRate);
 
-            System.out.println("framesScheduled=" + framesScheduled
-                            + " framesPlayed=" + framesPlayed
+            if (doPrint) System.out.println("framesScheduled=" + framesScheduled
+                            + " expectedFramesPlayed=" + expectedFramesPlayed
                             + " framesInBuffer=" + framesInBuffer
+                            + " diff ("+(expectedFramesPlayed-framesScheduled)+")"
                             + " playbackkqueue= "+playbackQueue.size());
 
             // only write when hardware should be ready for next packet
-            if (framesScheduled <= framesPlayed + framesInBuffer) {
+            if (framesScheduled <= expectedFramesPlayed + framesInBuffer) {
                 byte[] data = playbackQueue.poll();
                 if (data != null) {
-                    System.out.println("write data (playback remaining queue "+playbackQueue.size()+")");
+                    if (doPrint) System.out.println("write data (playback remaining queue "+playbackQueue.size()+")");
                     writeData(data, data.length);
                     framesScheduled += data.length / this.bytesPerFrame;
                 } else {
-                    System.out.println("Starvation. write silence");
+                    if (doPrint) System.out.println("Starvation. write silence");
+                    long t0 = System.nanoTime();
                     writeData(silenceBuffer, ioBufferSize);
+                    long writeMs = (System.nanoTime() - t0) / 1_000_000;
+//                    if (writeMs > 5) System.out.println("writeData took " + writeMs + "ms");
+//                    writeData(silenceBuffer, ioBufferSize);
                     framesScheduled += framesInBuffer;
                 }
             } else {
                 LockSupport.parkNanos(1_000_000L);
-                System.out.println("park");
+                if (doPrint) System.out.println("park");
             }
         }
     }
@@ -213,8 +225,9 @@ public class AudioStreamPlayer implements Runnable {
             // avoid overfilling the card buffer
             while (written < datalen) {  // TODO : probably needs fixing to fix SOTA buffer underflow bug
                 int toWrite = Math.min(ioBufferSize, datalen - written);
+
                 int actuallyWritten = sourceLine.write(data, written, toWrite);
-                System.out.println("actually written "+actuallyWritten + " ("+(ioBufferSize-actuallyWritten)+")");
+//                System.out.println("actually written "+actuallyWritten + " ("+(ioBufferSize-actuallyWritten)+")");
                 written += actuallyWritten;
             }
         } catch (Exception e) {  // shouldn't happen
