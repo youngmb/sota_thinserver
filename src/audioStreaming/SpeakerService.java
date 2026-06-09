@@ -38,7 +38,7 @@ public class SpeakerService {
         if (isEnabled()) return true;
 
         try {
-            udpReceiver = new UdpReceiver(port, queue, Properties.getPropAsInt(PropertyKey.KEY_SPK_BUFFER_SIZE));
+            udpReceiver = new UdpReceiver(port, queue);
         } catch (SocketException e) {
             lastError = "Error: unable to bind to requested port for listening: port '"+port+"'";
             return false;

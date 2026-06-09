@@ -23,16 +23,14 @@ public class UdpReceiver extends UdpStream implements Runnable {
     private final int[] waitBufferSeq = new int[waitBufferSize];
     private final byte[][] waitBufferData = new byte[waitBufferSize][];
     private int dataWaiting = 0; // number of packets saved
-    private int expectedBufferSize = 0;
+    private final int MAX_PACKET_SIZE = 65535;   // we really should expect no more than 1500, but don't dump data. this is max IP packet.
 
     public UdpReceiver(int port,
-                       BlockingQueue<byte[]> queue,
-                       int expectedBufferSize) // expected size of incoming data
+                       BlockingQueue<byte[]> queue) // expected size of incoming data
             throws SocketException {
         super(port);
         this.queue = queue;
         this.port = port;
-        this.expectedBufferSize = expectedBufferSize;
     }
 
     public void start() {
@@ -119,7 +117,8 @@ public class UdpReceiver extends UdpStream implements Runnable {
 
     @Override
     public void run() {
-        byte[] buffer = new byte[expectedBufferSize+SEQUENCE_RESERVED_BYTES];
+//        byte[] buffer = new byte[expectedBufferSize+SEQUENCE_RESERVED_BYTES];
+        byte[] buffer = new byte[MAX_PACKET_SIZE];
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
         try {
