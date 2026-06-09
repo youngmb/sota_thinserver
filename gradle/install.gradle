@@ -81,6 +81,18 @@ tasks.register('sotaSystemSetup') { //misc tasks on the sota system to support s
     }
 }
 
+tasks.register('sotaReboot') { //misc tasks on the sota system to support smooth operation
+    group='sota.install'
+    doLast {
+        ssh.run {
+            session(remotes.sota) {
+                // this update service breaks the sota
+                execute "nohup reboot >/dev/null 2>&1 &"
+            }
+        }
+    }
+}
+
 tasks.register('installJarsToHome') {
     group='sota.install'
     dependsOn 'makeJars', 'installLibs'
@@ -97,7 +109,6 @@ tasks.register('installJarsToHome') {
                 put from: fileTree(localResourceDir).files,
                         into: "${remoteBaseDir}",
                         overwrite: true
-
             }
         }
     }
@@ -145,5 +156,5 @@ tasks.register('installThinclientOnBoot') {
 // Full deploy
 tasks.register('installAll') {
     group='sota.install'
-    dependsOn 'installJarsToHome', 'installLibs', 'installThinclientOnBoot', 'sotaSystemSetup'
+    dependsOn 'installJarsToHome', 'installLibs', 'installThinclientOnBoot', 'sotaSystemSetup', 'sotaReboot'
 }
