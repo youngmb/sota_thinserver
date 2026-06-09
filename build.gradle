@@ -149,13 +149,13 @@ tasks.named('clean', Delete).configure {
 
 tasks.register('stageLibs') {
     group='sota.build'
-    outputs.dir("/lib")
+    outputs.dir("lib")
 
     doLast {
-        delete("/lib")
+        delete("lib")
         copy {
             from configurations.runtimeClasspath  // note that we added the sota jars to the runtimeClasspath
-            into "/lib"
+            into "lib"
         }
     }
 }
