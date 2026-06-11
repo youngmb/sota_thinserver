@@ -9,9 +9,7 @@ The API is straightforward but a thinclient in Python that connects to this serv
 [the Sota thinclient git repository](https://github.com/youngmb/sota_thinclient).
 
 ## requirements
-* It is recommended to start with a completely fresh Sota. Sota factory reset instructions can be found at the [manufacturer's website](https://sota.vstone.co.jp/sota/resource/faq/faq.php?faq_cd=22). This installer will do the following:
-* Sota needs to be connected to a network and have an accessible IP.
-* We have noticed some oddities with Sota versioning so if things do not work, try first to reset the sota using the above link and be sure **do not run the Sota update**.
+* It is recommended to start with a completely fresh Sota. You can reset Sota using the instructions found in `docs/sota-reset.md`. We have noticed some oddities with Sota versioning so if things do not work, try first to reset the sota  and be sure **do not run the Sota update**.
 
 ## installation
 
