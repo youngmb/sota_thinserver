@@ -5,8 +5,8 @@ version = '1.0'
 // Configuration
 
 ext {
-    scpServer = '10.151.63.71'
-//    scpServer = '192.168.0.23'
+//    scpServer = '10.151.63.71'
+    scpServer = '192.168.0.23'
 
     scpUser = 'root'
     scpPass = 'edison00'
@@ -149,5 +149,5 @@ tasks.register('installThinclientOnBoot') {
 // Full deploy
 tasks.register('installAll') {
     group='sota.install'
-    dependsOn 'installJarsToHome', 'installLibs', 'installThinclientOnBoot', 'sotaSystemSetup', 'sotaReboot'
+    dependsOn 'installJarsToHome', 'installLibs', 'installThinclientOnBoot', 'sotaSystemSetup'
 }
