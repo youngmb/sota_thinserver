@@ -1,0 +1,38 @@
+To profile or debug you need to kill the global service version and run it with the appropriate flags.
+If you are not using the motors, you can simply kill the Sota app manager and run your own version of the thinserver
+
+systemctl stop sotaappmng
+
+Then run
+./debugRunner SotaThinServer.jar
+or
+./profileRunner SotaThinServer.jar
+
+The problem is that the SotaAppMng service is needed to manage motors. So if you need debugging while the motors
+work, then you need to unfortunately temporarily uninstall the Sota service, reboot, and work on your local version.
+Once the problems are resolved, reinstall.
+
+You can uninstall it by
+- removing the two files in /home/vstone/vstonemagic/app/jar/
+- reboot.
+
+
+
+############### Debugging
+If you launch the server using the debug script it opens a remote debugging session on port 5005. You can modify
+the script to modify this port.
+
+Simply connect to the Sota's IP and this port using a remote debugger, like IntelliJ, and it should work seamlessly.
+
+
+############### Java profiling
+run the provided profileRunner script to launch the Jar, then
+
+
+jps -l to get the PID and replace the number below
+
+jcmd 21388 JFR.start \
+    name=robot \
+    duration=300s \
+    filename=/tmp/robot.jfr \
+    settings=profile

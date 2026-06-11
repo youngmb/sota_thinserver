@@ -61,9 +61,29 @@ to radians. To conduct a calibration:
 - one by one, move each motor to its extreme positions slowly. There are 8 motors.
 - press the sota power button to close the tool and save the new `motorranges.dat` file.
 
-udp streaming ports are defined by the client
-
 ## testing
+Once the thinserver is installed you can test in two ways
+
+### test programs
+The following programs are installed in `/home/root/thinserver` and can be run to test local functionalty
+- `ServoAngleReader` - reads servo values and prints them in radians. Tests servo reading.
+- `ServoFKTest` - reads servo values and prints their cartesian coordinates wrt the Sota frame. Note that Sota looks 
+down the negative Y axis and it's a right handed system.
+- `ServoRangeTest` - tests servo motion. Centers the robot's motors, then tests each servo one by one.
+- `ServoIKTest` - tests the IK enging by making the robot do a prescribed circular hand motion while moving the
+head. Note that the head twitches as part of the design and the body also rotates slightly.
+
+### HTTP server test
+Once the server is running you can test it on the localhost using a REST interface. We have included a suite of
+(poorly curated) test cases in `tests/HTTPTests.txt` which you can run on the command line. A simple test is to
+get the current details of the Sota motors:
+- `curl http://localhost:8080/pose/system | python -m json.tool`
+- `curl http://localhost:8080/pose/ | python -m json.tool`
+
 
 ## usage
+The server exposes HTTP end points that you can use to configure, read, and command the motors and LEDs. You can also
+use this to enable audio streaming (in and out) and set the parameters and video streaming.
 
+This is meant to be used with [the Sota thinclient](https://github.com/youngmb/sota_thinclient) but the interface is
+simple and can be integrated into other projects.
