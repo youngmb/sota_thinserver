@@ -56,13 +56,6 @@ tasks.register('sotaSystemSetup') { //misc tasks on the sota system to support s
                 // this update service breaks the sota
                 execute "systemctl disable sotaupdate.service"
 
-                // install the automatic mic reset to a sane volume service
-                put from: file("${localScriptsDir}/alsa-vol.service"),
-                    into: "/lib/systemd/system"
-                execute "systemctl daemon-reload"
-                execute "systemctl enable alsa-vol.service"
-                execute "systemctl start alsa-vol.service"
-
                 // install the english language pack
                 fileTree(localSoundsDir).visit { details ->
                     if (!details.directory) {
